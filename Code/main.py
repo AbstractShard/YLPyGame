@@ -39,6 +39,8 @@ if __name__ == "__main__":
         ENTITY_GROUP.draw(SCREEN)
         PLAYER_GROUP.draw(SCREEN)
 
+        basic.draw_debug(SCREEN, [ENVIRONMENT_GROUP, ENTITY_GROUP, PLAYER_GROUP])
+
         pygame.display.flip()
         CLOCK.tick(FPS)
     pygame.quit()
