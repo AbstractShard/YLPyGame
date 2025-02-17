@@ -1,14 +1,15 @@
 import pygame
 import sys
 
+import player
 import basic
 
-# consts
+# MAIN
 SIZE = WIDTH, HEIGHT = 800, 600
 FPS = 60
 CLOCK = pygame.time.Clock()
 
-# groups
+# GROUPS
 PLAYER_GROUP = pygame.sprite.Group()
 ENTITY_GROUP = pygame.sprite.Group()
 ENVIRONMENT_GROUP = pygame.sprite.Group()
@@ -20,7 +21,7 @@ if __name__ == "__main__":
     SCREEN = pygame.display.set_mode(SIZE)
 
     # testing
-    PLAYER = basic.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP, ENTITY_GROUP], [ENTITY_GROUP])
+    PLAYER = player.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP, ENTITY_GROUP], [ENTITY_GROUP])
     WALL = basic.Part([ENVIRONMENT_GROUP], [], (50, 15), True)
     ENTITY = basic.Entity([ENTITY_GROUP], [], [], (15, 100), 100, (10, 20), True, (10, 20))
 
@@ -32,8 +33,8 @@ if __name__ == "__main__":
 
         SCREEN.fill("black")
 
-        PLAYER.movement()
-        PLAYER.attack()
+        PLAYER.update()
+        ENTITY.update()
 
         ENVIRONMENT_GROUP.draw(SCREEN)
         ENTITY_GROUP.draw(SCREEN)
