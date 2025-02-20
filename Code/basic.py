@@ -1,4 +1,5 @@
 import pygame
+import numpy
 import os
 
 # region FUNCTIONS
@@ -24,6 +25,25 @@ def load_image(name: str, colorkey=0):
     return image
 
 
+def get_rotated(original_image: pygame.Surface, current_rect: pygame.Rect, angle: int) -> (pygame.Surface, pygame.Rect):
+    rotated_image = pygame.transform.rotate(original_image, angle)
+    new_rect = rotated_image.get_rect(center=current_rect.center)
+    return rotated_image, new_rect
+
+
+def get_rotated_around_pivot(original_image: pygame.Surface, current_image: pygame.Surface,
+                             pivot: tuple, target: tuple, length: int):
+    offset = pygame.math.Vector2()
+    offset.from_polar((length, 0))
+
+    angle = int((pygame.math.Vector2(target) - pygame.math.Vector2(pivot)).as_polar()[1])
+    pos = pivot + offset.rotate(angle)
+
+    new_rect = current_image.get_rect(center=pos)
+    new_image, new_rect = get_rotated(original_image, new_rect, -angle)
+    return new_image, new_rect
+
+
 def draw_debug(screen, groups: list):
     for group in groups:
         for sprite in group.sprites():
@@ -41,6 +61,19 @@ def draw_debug(screen, groups: list):
 
             if hasattr(sprite, "curr_attacks") and sprite.curr_attacks:
                 for atk in sprite.curr_attacks:
+                    if isinstance(atk, OrbitAttack):
+                        pix_arr = pygame.surfarray.pixels3d(atk.image)
+
+                        for i in range(len(pix_arr)):
+                            for j in range(len(pix_arr[i])):
+                                pix_arr[i][j] = numpy.array(pygame.Color("red")[:-1])\
+                                    if atk.counter["frames"] else numpy.array(pygame.Color("white")[:-1])
+
+                        del pix_arr
+
+                        screen.blit(atk.image, atk.rect.topleft)
+                        continue
+
                     atk_image = pygame.Surface(atk.rect.size, pygame.SRCALPHA)
                     pygame.draw.rect(atk_image, "red" if atk.counter["frames"] else "white", (0, 0, *atk.rect.size), 1)
 
@@ -52,10 +85,14 @@ class CSprite(pygame.sprite.Sprite):
     def __init__(self, start_pos: tuple, size: tuple, collision_type: str, relative_pos=None):
         super().__init__()
 
-        self.image = pygame.Surface(size, pygame.SRCALPHA)
-        self.image.fill("white")
+        self.orig_image = pygame.Surface(size, pygame.SRCALPHA)
+        self.orig_image.fill("white")
 
-        self.rect = pygame.Rect(start_pos, self.image.get_rect().size)
+        self.image = self.orig_image
+
+        self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
+        self.rect.center = start_pos
+
         self.mask = pygame.mask.from_surface(self.image)
 
         self.collision_type = collision_type
@@ -75,12 +112,31 @@ class Attack(CSprite):
 
         self.counter = {"frames": self.active_frames,
                         "cooldown": self.cooldown}
+        self.pos_diff = (0, 0)
 
     def setup(self, pos: tuple):
-        self.rect.x, self.rect.y = pos
+        self.rect.center = pos
 
         self.counter = {"frames": self.active_frames,
                         "cooldown": self.cooldown}
+
+        self.pos_diff = self.rect.center[0] - pos[0], self.rect.center[1] - pos[1]
+
+
+class OrbitAttack(Attack):
+    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, length: int, active_frames: int, damage: int, cooldown: int,
+                 applied_invincibility_frames: int):
+        super().__init__(relative_to_pivot_pos, size, "mask", active_frames, damage, cooldown, applied_invincibility_frames, True)
+
+        self.length = length
+
+    def setup_orbit(self, pivot_pos: tuple, target: tuple):
+        super().setup(pivot_pos)
+
+        self.image, self.rect = get_rotated_around_pivot(self.orig_image, self.image, self.rect.center, target, self.length)
+        self.mask = pygame.mask.from_surface(self.image)
+
+        self.pos_diff = self.rect.center[0] - pivot_pos[0], self.rect.center[1] - pivot_pos[1]
 
 
 class Part(pygame.sprite.Sprite):
@@ -89,6 +145,7 @@ class Part(pygame.sprite.Sprite):
         super().__init__(*groups)
 
         # basics
+        self.orig_image = None
         self.image = None
         self.rect = None
 
@@ -102,16 +159,18 @@ class Part(pygame.sprite.Sprite):
 
     def setup_basics(self, pos: tuple, img_name="", colorkey=0, tsize=(50, 50), tcolor="grey"):
         if img_name:
-            self.image = load_image(img_name, colorkey)
+            self.orig_image = load_image(img_name, colorkey)
         else:
-            self.image = pygame.Surface(tsize, pygame.SRCALPHA)
-            self.image.fill(tcolor)
+            self.orig_image = pygame.Surface(tsize, pygame.SRCALPHA)
+            self.orig_image.fill(tcolor)
 
-        self.rect = pygame.Rect(pos, self.image.get_rect().size)
+        self.image = self.orig_image
+        self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
+        self.rect.center = pos
 
     def update_collider(self, update_mask=False):
-        self.collider.rect.x = self.rect.x + self.collider.relative_pos[0]
-        self.collider.rect.y = self.rect.y + self.collider.relative_pos[1]
+        self.collider.rect.center = (self.rect.center[0] + self.collider.relative_pos[0],
+                                     self.rect.center[1] + self.collider.relative_pos[1])
 
         if update_mask:
             self.collider.mask = pygame.mask.from_surface(self.collider.image)
@@ -164,8 +223,14 @@ class Entity(Part):
         if self.health <= 0:
             self.kill()
 
-    def make_attack(self, atk: Attack):
-        atk.setup((self.rect.x + atk.relative_pos[0], self.rect.y + atk.relative_pos[1]))
+    def make_attack(self, atk: Attack, target=(0, 0)):
+        pos_to_pass = (self.rect.center[0] + atk.relative_pos[0], self.rect.center[1] + atk.relative_pos[1])
+
+        if isinstance(atk, OrbitAttack):
+            atk.setup_orbit(pos_to_pass, target)
+        else:
+            atk.setup(pos_to_pass)
+
         self.curr_attacks.append(atk)
 
     def check_attacks(self):
@@ -211,13 +276,12 @@ class Entity(Part):
         self.frame = self.frame + 1 if self.curr_attacks else 0
 
     def update_boxes(self):
-        self.hurtbox.rect.x = self.rect.x + self.hurtbox.relative_pos[0]
-        self.hurtbox.rect.y = self.rect.y + self.hurtbox.relative_pos[1]
+        self.hurtbox.rect.center = (self.rect.center[0] + self.hurtbox.relative_pos[0],
+                                    self.rect.center[1] + self.hurtbox.relative_pos[1])
 
         for atk in self.curr_attacks:
             if atk.movable:
-                atk.rect.x = self.rect.x + atk.relative_pos[0]
-                atk.rect.y = self.rect.y + atk.relative_pos[1]
+                atk.rect.center = self.rect.center[0] + atk.pos_diff[0], self.rect.center[1] + atk.pos_diff[1]
 
     def update(self):
         self.update_frames()

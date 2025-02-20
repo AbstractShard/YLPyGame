@@ -3,7 +3,7 @@ import basic
 
 # BINDS
 MOVEMENT = {pygame.K_w: (0, -1), pygame.K_d: (1, 0), pygame.K_s: (0, 1), pygame.K_a: (-1, 0)}
-ATTACKS = {("MOUSE", 0): "TESTATTACK"}
+ATTACKS = {("MOUSE", 0): "TESTATTACK", ("MOUSE", 2): "ORBITTESTATTACK"}
 
 # MOVEMENT
 SPEED = 1
@@ -64,7 +64,7 @@ class Move(basic.State):
 
 class TestAttack(basic.Attack, basic.State):
     def __init__(self):
-        basic.Attack.__init__(self, (25, 5), (25, 5), "rect", 15, 25, 50, 50)
+        basic.Attack.__init__(self, (0, 0), (26, 5), "rect", 15, 25, 50, 50)
         basic.State.__init__(self)
 
     def run(self, parent) -> str:
@@ -73,10 +73,23 @@ class TestAttack(basic.Attack, basic.State):
 
         if self not in parent.curr_attacks:
             parent.make_attack(self)
+
+
+class OrbitTestAttack(basic.OrbitAttack, basic.State):
+    def __init__(self):
+        basic.OrbitAttack.__init__(self, (0, 0), (15, 15), 15, 15, 25, 50, 50)
+        basic.State.__init__(self)
+
+    def run(self, parent) -> str:
+        if self.counter["frames"] <= 0 < self.counter["cooldown"]:
+            return "IDLE"
+
+        if self not in parent.curr_attacks:
+            parent.make_attack(self, pygame.mouse.get_pos())
 # endregion
 
 
-STATES = {"IDLE": Idle(), "MOVE": Move(), "TESTATTACK": TestAttack()}
+STATES = {"IDLE": Idle(), "MOVE": Move(), "TESTATTACK": TestAttack(), "ORBITTESTATTACK": OrbitTestAttack()}
 
 
 class Player(basic.StateMachine, basic.Entity):
