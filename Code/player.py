@@ -20,7 +20,7 @@ def to_attack() -> str:
         if (bind_type == "KEYBOARD" and pygame.key.get_pressed()[bind]) or (bind_type == "MOUSE" and pygame.mouse.get_pressed()[bind]):
             atk = STATES[ATTACKS[(bind_type, bind)]]
 
-            if not atk.counter["cooldown"] or atk.counter["cooldown"] == atk.cooldown:
+            if not atk.counter["cooldown"]:
                 return atk.__class__.__name__.upper()
     return ""
 # endregion
@@ -64,11 +64,11 @@ class Move(basic.State):
 
 class TestAttack(basic.Attack, basic.State):
     def __init__(self):
-        basic.Attack.__init__(self, (0, 0), (26, 5), "rect", 15, 25, 50, 50)
+        basic.Attack.__init__(self, (0, 0), (26, 5), "rect", 0, 15, 10, 25, 50, 50)
         basic.State.__init__(self)
 
     def run(self, parent) -> str:
-        if self.counter["frames"] <= 0 < self.counter["cooldown"]:
+        if self.attack_ended():
             return "IDLE"
 
         if self not in parent.curr_attacks:
@@ -77,11 +77,11 @@ class TestAttack(basic.Attack, basic.State):
 
 class OrbitTestAttack(basic.OrbitAttack, basic.State):
     def __init__(self):
-        basic.OrbitAttack.__init__(self, (0, 0), (15, 15), 15, 15, 25, 50, 50)
+        basic.OrbitAttack.__init__(self, (0, 0), (15, 15), 15, 2, 1, 3, 25, 50, 50)
         basic.State.__init__(self)
 
     def run(self, parent) -> str:
-        if self.counter["frames"] <= 0 < self.counter["cooldown"]:
+        if self.attack_ended():
             return "IDLE"
 
         if self not in parent.curr_attacks:

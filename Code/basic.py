@@ -61,13 +61,23 @@ def draw_debug(screen, groups: list):
 
             if hasattr(sprite, "curr_attacks") and sprite.curr_attacks:
                 for atk in sprite.curr_attacks:
+                    atk_color = pygame.Color("white")
+
+                    if atk.counter["startup"] > 0:
+                        atk_color = pygame.Color("orange")
+
+                    elif atk.counter["active"] > 0:
+                        atk_color = pygame.Color("red")
+
+                    elif atk.counter["recovery"] > 0:
+                        atk_color = pygame.Color("blue")
+
                     if isinstance(atk, OrbitAttack):
                         pix_arr = pygame.surfarray.pixels3d(atk.image)
 
                         for i in range(len(pix_arr)):
                             for j in range(len(pix_arr[i])):
-                                pix_arr[i][j] = numpy.array(pygame.Color("red")[:-1])\
-                                    if atk.counter["frames"] else numpy.array(pygame.Color("white")[:-1])
+                                pix_arr[i][j] = numpy.array(atk_color[:-1])
 
                         del pix_arr
 
@@ -75,7 +85,7 @@ def draw_debug(screen, groups: list):
                         continue
 
                     atk_image = pygame.Surface(atk.rect.size, pygame.SRCALPHA)
-                    pygame.draw.rect(atk_image, "red" if atk.counter["frames"] else "white", (0, 0, *atk.rect.size), 1)
+                    pygame.draw.rect(atk_image, atk_color, (0, 0, *atk.rect.size), 1)
 
                     screen.blit(atk_image, atk.rect.topleft)
 # endregion
@@ -100,33 +110,45 @@ class CSprite(pygame.sprite.Sprite):
 
 
 class Attack(CSprite):
-    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, active_frames: int, damage: int,
-                 cooldown: int, applied_invincibility_frames: int, movable=True):
+    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str,
+                 startup_frames: int, active_frames: int, recovery_frames: int,
+                 damage: int, cooldown: int, applied_invincibility_frames: int, movable=True):
         super().__init__((0, 0), size, collision_type, relative_pos)
 
+        self.startup_frames = startup_frames
         self.active_frames = active_frames
+        self.recovery_frames = recovery_frames
+
         self.damage = damage
         self.cooldown = cooldown
         self.applied_invincibility_frames = applied_invincibility_frames
         self.movable = movable
 
-        self.counter = {"frames": self.active_frames,
-                        "cooldown": self.cooldown}
+        self.counter = {"startup": self.startup_frames, "active": self.active_frames, "recovery": self.recovery_frames,
+                        "cooldown": 0}
         self.pos_diff = (0, 0)
 
     def setup(self, pos: tuple):
         self.rect.center = pos
 
-        self.counter = {"frames": self.active_frames,
+        self.counter = {"startup": self.startup_frames, "active": self.active_frames, "recovery": self.recovery_frames,
                         "cooldown": self.cooldown}
 
         self.pos_diff = self.rect.center[0] - pos[0], self.rect.center[1] - pos[1]
 
+    def attack_ended(self) -> bool:
+        if self.counter["recovery"] <= 0 < self.counter["cooldown"]:
+            return True
+        return False
+
 
 class OrbitAttack(Attack):
-    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, length: int, active_frames: int, damage: int, cooldown: int,
-                 applied_invincibility_frames: int):
-        super().__init__(relative_to_pivot_pos, size, "mask", active_frames, damage, cooldown, applied_invincibility_frames, True)
+    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, length: int,
+                 startup_frames: int, active_frames: int, recovery_frames: int,
+                 damage: int, cooldown: int, applied_invincibility_frames: int):
+        super().__init__(relative_to_pivot_pos, size, "mask",
+                         startup_frames, active_frames, recovery_frames,
+                         damage, cooldown, applied_invincibility_frames, True)
 
         self.length = length
 
@@ -235,7 +257,7 @@ class Entity(Part):
 
     def check_attacks(self):
         for atk in self.curr_attacks:
-            if atk.counter["frames"] <= 0:
+            if atk.counter["startup"] > 0 or atk.counter["active"] <= 0:
                 continue
 
             for group in self.to_attack:
@@ -261,11 +283,21 @@ class Entity(Part):
 
     def update_frames(self):
         for atk in self.curr_attacks:
-            if atk.counter["frames"] > 0:
-                atk.counter["frames"] -= 1
+            if atk.counter["startup"] > 0:
+                atk.counter["startup"] -= 1
+                continue
 
-            if atk.counter["frames"] <= 0 < atk.counter["cooldown"]:
+            if atk.counter["startup"] <= 0 < atk.counter["active"]:
+                atk.counter["active"] -= 1
+                continue
+
+            if atk.counter["active"] <= 0 < atk.counter["recovery"]:
+                atk.counter["recovery"] -= 1
+                continue
+
+            if atk.counter["recovery"] <= 0 < atk.counter["cooldown"]:
                 atk.counter["cooldown"] -= 1
+                continue
 
             if atk.counter["cooldown"] <= 0:
                 self.curr_attacks.remove(atk)
