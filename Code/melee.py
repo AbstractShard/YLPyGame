@@ -4,16 +4,13 @@ import player
 import basic
 import main
 
+# movement
 SPEED = 65 / main.FPS
-
-
-def get_distance(start: tuple, end: tuple) -> float:
-    return pygame.math.Vector2(end).distance_to(pygame.math.Vector2(start))
 
 
 class Move(basic.State):
     def run(self, parent) -> str:
-        if get_distance(parent.rect.center, parent.player.rect.center) <= 20:
+        if basic.get_distance(parent.rect.center, parent.player.rect.center) <= 20:
             if not STATES["SIMPLEATTACK"].counter["cooldown"]:
                 return "SIMPLEATTACK"
             return ""

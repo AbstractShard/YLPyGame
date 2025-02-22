@@ -2,6 +2,8 @@ import pygame
 import numpy
 import os
 
+import main
+
 # region FUNCTIONS
 def load_image(name: str, colorkey=0):
     fullname = os.path.join("Data", name)
@@ -23,6 +25,10 @@ def load_image(name: str, colorkey=0):
 
     image = image.convert_alpha()
     return image
+
+
+def get_distance(start: tuple, end: tuple) -> float:
+    return pygame.math.Vector2(start).distance_to(pygame.math.Vector2(end))
 
 
 def get_rotated(original_image: pygame.Surface, current_rect: pygame.Rect, angle: int) -> (pygame.Surface, pygame.Rect):
@@ -88,6 +94,13 @@ def draw_debug(screen, groups: list):
                     pygame.draw.rect(atk_image, atk_color, (0, 0, *atk.rect.size), 1)
 
                     screen.blit(atk_image, atk.rect.topleft)
+
+            if hasattr(sprite, "curr_projectiles") and sprite.curr_projectiles:
+                for proj in sprite.curr_projectiles:
+                    proj_image = pygame.Surface(proj.rect.size, pygame.SRCALPHA)
+                    pygame.draw.ellipse(proj_image, "white", (0, 0, *proj.rect.size), 1)
+
+                    screen.blit(proj_image, proj.rect.topleft)
 # endregion
 
 # region CLASSES
@@ -163,6 +176,47 @@ class OrbitAttack(Attack):
         self.pos_diff = self.rect.center[0] - pivot_pos[0], self.rect.center[1] - pivot_pos[1]
 
 
+class Projectile(CSprite):
+    def __init__(self, start_pos: tuple, size: tuple, collision_type: str,
+                 direction: pygame.math.Vector2, speed: int, destroy_frames: int,
+                 damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0):
+        super().__init__(start_pos, size, collision_type)
+
+        self.dir = direction.normalize()
+        self.speed = speed / main.FPS
+
+        self.damage = damage
+        self.applied_invincibility_frames = applied_invincibility_frames
+        self.applied_hitstun_frames = applied_hitstun_frames  # not used in this file
+
+        self.do_bounce = do_bounce
+        self.counter = {"destroy": destroy_frames}
+
+    def move(self):
+        self.fpos += self.dir * self.speed
+        self.rect.center = self.fpos
+
+    def check_collision(self, with_what) -> bool:
+        if self.collision_type == "rect" and with_what.collision_type == "rect":
+            if self.rect.colliderect(with_what.rect):
+                return True
+
+        elif self.collision_type == "circle" and with_what.collision_type == "circle":
+            if pygame.sprite.collide_circle(self, with_what):
+                return True
+
+        else:
+            if self.rect.colliderect(with_what.rect):
+                if pygame.sprite.collide_mask(self, with_what):
+                    return True
+
+        return False
+
+    def bounce(self):
+        angle = self.dir.as_polar()[1]
+        self.dir.rotate_ip(-angle * 2)
+
+
 class Part(pygame.sprite.Sprite):
     def __init__(self, groups: list, collide_with: list, pos: tuple,
                  have_collision=False, collider_size=(50, 50), collider_pos=None):
@@ -234,6 +288,7 @@ class Entity(Part):
 
         self.to_attack = to_attack.copy()
         self.curr_attacks = []
+        self.curr_projectiles = []
 
         self.hurtbox = CSprite(pos, hurtbox_size, "rect", hurtbox_pos)
         self.invincibility_counter = 0
@@ -261,34 +316,65 @@ class Entity(Part):
 
         self.curr_attacks.append(atk)
 
+    def spawn_projectile(self, proj: Projectile):
+        self.curr_projectiles.append(proj)
+
     def check_attacks(self):
+        def check_attack_collision(atk: Attack, with_what) -> bool:
+            if atk.collision_type == "rect" and with_what.collision_type == "rect":
+                if atk.rect.colliderect(with_what.rect):
+                    return True
+
+            elif atk.collision_type == "circle" and with_what.collision_type == "circle":
+                if pygame.sprite.collide_circle(atk, with_what):
+                    return True
+
+            else:
+                if atk.rect.colliderect(with_what.rect):
+                    if pygame.sprite.collide_mask(atk, with_what):
+                        return True
+
+            return False
+
+        collided_attacks = []
+
         for atk in self.curr_attacks:
             if atk.counter["startup"] > 0 or atk.counter["active"] <= 0:
                 continue
 
             for group in self.to_attack:
                 for sprite in group.sprites():
-                    if atk.collision_type == "rect" and sprite.hurtbox.collision_type == "rect":
-                        if atk.rect.colliderect(sprite.hurtbox.rect):
-                            if not sprite.invincibility_counter:
-                                sprite.take_damage(atk.damage)
-                                sprite.invincibility_counter = atk.applied_invincibility_frames
-                                return atk
+                    if check_attack_collision(atk, sprite.hurtbox) and not sprite.invincibility_counter:
+                        sprite.take_damage(atk.damage)
+                        sprite.invincibility_counter = atk.applied_invincibility_frames
+                        collided_attacks.append(atk)
 
-                    elif atk.collision_type == "circle" and sprite.hurtbox.collision_type == "circle":
-                        if pygame.sprite.collide_circle(atk, sprite.hurtbox):
-                            if not sprite.invincibility_counter:
-                                sprite.take_damage(atk.damage)
-                                sprite.invincibility_counter = atk.applied_invincibility_frames
-                                return atk
+        return collided_attacks[0] if collided_attacks else None
 
-                    else:
-                        if atk.rect.colliderect(sprite.rect):
-                            if pygame.sprite.collide_mask(atk, sprite.hurtbox):
-                                if not sprite.invincibility_counter:
-                                    sprite.take_damage(atk.damage)
-                                    sprite.invincibility_counter = atk.applied_invincibility_frames
-                                    return atk
+    def check_projectiles(self):
+        collided_damage_projectiles = []
+
+        for proj in self.curr_projectiles:
+            proj.move()
+
+            for group in self.collide_with:
+                for sprite in group.sprites():
+                    if proj.check_collision(sprite.collider):
+                        if proj.do_bounce:
+                            proj.bounce()
+                            continue
+
+                        self.curr_projectiles.remove(proj)
+
+        for proj in self.curr_projectiles:
+            for group in self.to_attack:
+                for sprite in group.sprites():
+                    if proj.check_collision(sprite.hurtbox) and not sprite.invincibility_counter:
+                        sprite.take_damage(proj.damage)
+                        sprite.invincibility_counter = proj.applied_invincibility_frames
+                        collided_damage_projectiles.append(proj)
+
+        return collided_damage_projectiles[0] if collided_damage_projectiles else None
 
     def update_frames(self):
         for atk in self.curr_attacks:
@@ -310,6 +396,13 @@ class Entity(Part):
 
             if atk.counter["cooldown"] <= 0:
                 self.curr_attacks.remove(atk)
+
+        for proj in self.curr_projectiles:
+            if proj.counter["destroy"] > 0:
+                proj.counter["destroy"] -= 1
+                continue
+
+            self.curr_projectiles.remove(proj)
 
         if self.invincibility_counter > 0:
             self.invincibility_counter -= 1
