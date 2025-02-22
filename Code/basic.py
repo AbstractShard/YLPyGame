@@ -100,8 +100,10 @@ class CSprite(pygame.sprite.Sprite):
 
         self.image = self.orig_image
 
+        self.fpos = start_pos
+
         self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
-        self.rect.center = start_pos
+        self.rect.center = self.fpos
 
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -169,6 +171,7 @@ class Part(pygame.sprite.Sprite):
         # basics
         self.orig_image = None
         self.image = None
+        self.fpos = None
         self.rect = None
 
         # collision
@@ -187,8 +190,11 @@ class Part(pygame.sprite.Sprite):
             self.orig_image.fill(tcolor)
 
         self.image = self.orig_image
+
+        self.fpos = pos
+
         self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
-        self.rect.center = pos
+        self.rect.center = self.fpos
 
     def update_collider(self, update_mask=False):
         self.collider.rect.center = (self.rect.center[0] + self.collider.relative_pos[0],
@@ -267,12 +273,14 @@ class Entity(Part):
                             if not sprite.invincibility_counter:
                                 sprite.take_damage(atk.damage)
                                 sprite.invincibility_counter = atk.applied_invincibility_frames
+                                return atk
 
                     elif atk.collision_type == "circle" and sprite.hurtbox.collision_type == "circle":
                         if pygame.sprite.collide_circle(atk, sprite.hurtbox):
                             if not sprite.invincibility_counter:
                                 sprite.take_damage(atk.damage)
                                 sprite.invincibility_counter = atk.applied_invincibility_frames
+                                return atk
 
                     else:
                         if atk.rect.colliderect(sprite.rect):
@@ -280,6 +288,7 @@ class Entity(Part):
                                 if not sprite.invincibility_counter:
                                     sprite.take_damage(atk.damage)
                                     sprite.invincibility_counter = atk.applied_invincibility_frames
+                                    return atk
 
     def update_frames(self):
         for atk in self.curr_attacks:
@@ -320,7 +329,7 @@ class Entity(Part):
 
 
 class State:
-    def enter(self):
+    def enter(self, var):
         pass
 
     def run(self, parent) -> str:
@@ -336,10 +345,10 @@ class StateMachine:
         self.curr_state = states[start_state]
         self.nested_states_depth = 25
 
-    def change_state(self, new_state_name: str):
+    def change_state(self, new_state_name: str, enter_var=None):
         self.curr_state.exit()
         self.curr_state = self.states[new_state_name]
-        self.curr_state.enter()
+        self.curr_state.enter(enter_var)
 
     def update_states(self, parent):
         for _ in range(self.nested_states_depth):

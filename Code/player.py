@@ -1,12 +1,14 @@
 import pygame
+
 import basic
+import main
 
 # BINDS
 MOVEMENT = {pygame.K_w: (0, -1), pygame.K_d: (1, 0), pygame.K_s: (0, 1), pygame.K_a: (-1, 0)}
 ATTACKS = {("MOUSE", 0): "TESTATTACK", ("MOUSE", 2): "ORBITTESTATTACK"}
 
 # MOVEMENT
-SPEED = 1
+SPEED = 60 / main.FPS
 
 # region FUNCTIONS
 def to_movement() -> bool:
@@ -34,8 +36,6 @@ class Idle(basic.State):
         if atk := to_attack():
             return atk
 
-        return ""
-
 
 class Move(basic.State):
     def run(self, parent) -> str:
@@ -47,19 +47,38 @@ class Move(basic.State):
         if atk := to_attack():
             return atk
 
-        for dir in move_dirs:
-            move_vec = pygame.math.Vector2(dir).normalize() * SPEED
+        try:
+            move_vec = pygame.math.Vector2()
+            for direction in move_dirs:
+                move_vec += direction
+            move_vec = move_vec.normalize() * SPEED
 
-            parent.rect.move_ip(move_vec)
+            parent.fpos += move_vec
+            parent.rect.center = parent.fpos
+
             parent.update_collider()
             parent.update_boxes()
 
             if parent.check_collisions():
-                parent.rect.move_ip(-move_vec)
+                parent.fpos -= move_vec
+                parent.rect.center = parent.fpos
+
                 parent.update_collider()
                 parent.update_boxes()
 
-        return ""
+        except ValueError:
+            pass
+
+
+class Hitstun(basic.State):
+    def enter(self, var):
+        self.hitstun_counter = var
+
+    def run(self, parent) -> str:
+        if self.hitstun_counter <= 0:
+            return "IDLE"
+
+        self.hitstun_counter -= 1
 
 
 class TestAttack(basic.Attack, basic.State):
@@ -89,7 +108,8 @@ class OrbitTestAttack(basic.OrbitAttack, basic.State):
 # endregion
 
 
-STATES = {"IDLE": Idle(), "MOVE": Move(), "TESTATTACK": TestAttack(), "ORBITTESTATTACK": OrbitTestAttack()}
+STATES = {"IDLE": Idle(), "MOVE": Move(), "HITSTUN": Hitstun(),
+          "TESTATTACK": TestAttack(), "ORBITTESTATTACK": OrbitTestAttack()}
 
 
 class Player(basic.StateMachine, basic.Entity):

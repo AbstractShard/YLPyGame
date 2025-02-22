@@ -2,6 +2,7 @@ import pygame
 import sys
 
 import player
+import melee
 import basic
 
 # MAIN
@@ -11,6 +12,7 @@ CLOCK = pygame.time.Clock()
 
 # GROUPS
 PLAYER_GROUP = pygame.sprite.Group()
+ENTITY_GROUP = pygame.sprite.Group()
 ENVIRONMENT_GROUP = pygame.sprite.Group()
 ROTATE_GROUP = pygame.sprite.Group()
 
@@ -48,9 +50,10 @@ if __name__ == "__main__":
 
     SCREEN = pygame.display.set_mode(SIZE)
 
-    PLAYER = player.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP], [])
+    PLAYER = player.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP], [ENTITY_GROUP])
     WALL = basic.Part([ENVIRONMENT_GROUP], [], (50, 15), True)
     ROTATE_BLOCK = RotateSprite()
+    MELEE = melee.Melee(PLAYER, [ENTITY_GROUP], [ENVIRONMENT_GROUP], [PLAYER_GROUP], (70, 70))
 
     while True:
         SCREEN.fill("black")
@@ -63,14 +66,16 @@ if __name__ == "__main__":
         SCREEN.fill("black")
 
         PLAYER.update()
+        MELEE.update()
 
         ENVIRONMENT_GROUP.draw(SCREEN)
         PLAYER_GROUP.draw(SCREEN)
+        ENTITY_GROUP.draw(SCREEN)
         ROTATE_GROUP.draw(SCREEN)
 
         ROTATE_GROUP.update()
 
-        basic.draw_debug(SCREEN, [ENVIRONMENT_GROUP, PLAYER_GROUP])
+        basic.draw_debug(SCREEN, [ENVIRONMENT_GROUP, PLAYER_GROUP, ENTITY_GROUP])
         pygame.draw.rect(SCREEN, "yellow", ROTATE_BLOCK.rect, 1)
 
         pygame.display.flip()
