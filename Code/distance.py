@@ -55,7 +55,7 @@ class SimpleProjectile(basic.State):
 
         proj = basic.Projectile(parent.rect.center, (5, 5), "circle",
                                 pygame.math.Vector2(parent.player.rect.center) - pygame.math.Vector2(parent.rect.center),
-                                150, 500, 15, 10, True, 50)
+                                150 / main.FPS, 500, 15, 10, True, 50)
 
         parent.spawn_projectile(proj)
         self.counter["reload"] = self.reload_frames

@@ -57,6 +57,9 @@ if __name__ == "__main__":
     MELEE = melee.Melee(PLAYER, [ENTITY_GROUP], [ENVIRONMENT_GROUP], [PLAYER_GROUP], (70, 70))
     DISTANCE = distance.Distance(PLAYER, [ENTITY_GROUP], [ENVIRONMENT_GROUP], [PLAYER_GROUP], (25, 150))
 
+    # for i in range(50, 500, 25):
+    #     distance.Distance(PLAYER, [ENTITY_GROUP], [ENVIRONMENT_GROUP], [PLAYER_GROUP], (i, 150))
+
     while True:
         SCREEN.fill("black")
 
@@ -67,9 +70,8 @@ if __name__ == "__main__":
 
         SCREEN.fill("black")
 
-        PLAYER.update()
-        MELEE.update()
-        DISTANCE.update()
+        PLAYER_GROUP.update()
+        ENTITY_GROUP.update()
 
         ENVIRONMENT_GROUP.draw(SCREEN)
         PLAYER_GROUP.draw(SCREEN)

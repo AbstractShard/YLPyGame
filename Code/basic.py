@@ -2,8 +2,6 @@ import pygame
 import numpy
 import os
 
-import main
-
 # region FUNCTIONS
 def load_image(name: str, colorkey=0):
     fullname = os.path.join("Data", name)
@@ -178,12 +176,12 @@ class OrbitAttack(Attack):
 
 class Projectile(CSprite):
     def __init__(self, start_pos: tuple, size: tuple, collision_type: str,
-                 direction: pygame.math.Vector2, speed: int, destroy_frames: int,
+                 direction: pygame.math.Vector2, speed_divided_by_fps: int, destroy_frames: int,
                  damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0):
         super().__init__(start_pos, size, collision_type)
 
         self.dir = direction.normalize()
-        self.speed = speed / main.FPS
+        self.speed = speed_divided_by_fps
 
         self.damage = damage
         self.applied_invincibility_frames = applied_invincibility_frames
@@ -219,7 +217,8 @@ class Projectile(CSprite):
 
 class Part(pygame.sprite.Sprite):
     def __init__(self, groups: list, collide_with: list, pos: tuple,
-                 have_collision=False, collider_size=(50, 50), collider_pos=None):
+                 have_collision=False, collider_size=(50, 50), collider_pos=None,
+                 img_name="", tsize=(50, 50), tcolor="grey"):
         super().__init__(*groups)
 
         # basics
@@ -234,7 +233,7 @@ class Part(pygame.sprite.Sprite):
 
         # for testing
         if self.__class__ == Part:
-            self.setup_basics(pos)
+            self.setup_basics(pos, img_name=img_name, tsize=tsize, tcolor=tcolor)
 
     def setup_basics(self, pos: tuple, img_name="", colorkey=0, tsize=(50, 50), tcolor="grey"):
         if img_name:
