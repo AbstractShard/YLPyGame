@@ -72,7 +72,7 @@ class Move(basic.State):
 
 class Hitstun(basic.State):
     def enter(self, var):
-        self.hitstun_counter = var
+        self.hitstun_counter = var if var is not None else 0
 
     def run(self, parent) -> str:
         if self.hitstun_counter <= 0:

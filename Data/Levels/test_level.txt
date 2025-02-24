@@ -1,1 +1,1 @@
-groups=[], collide_with=[], pos=(0, 0), have_collision=False, collider_size=(0, 0), collider_pos=None, img_name="", tsize=(0, 0), tcolor="white"
+Part: groups=[], collide_with=[], pos=(0, 0), tsize=(50, 50), tcolor="red"

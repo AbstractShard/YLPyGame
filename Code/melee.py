@@ -4,20 +4,22 @@ import player
 import basic
 import main
 
-# movement
-SPEED = 65 / main.FPS
-
 
 class Move(basic.State):
+    def __init__(self):
+        super().__init__()
+
+        self.SPEED = 65 / main.FPS
+
     def run(self, parent) -> str:
         if basic.get_distance(parent.rect.center, parent.player.rect.center) <= 20:
-            if not STATES["SIMPLEATTACK"].counter["cooldown"]:
+            if not parent.STATES["SIMPLEATTACK"].counter["cooldown"]:
                 return "SIMPLEATTACK"
             return ""
 
         try:
             move_vec = (pygame.math.Vector2(parent.player.rect.center) -
-                        pygame.math.Vector2(parent.rect.center)).normalize() * SPEED
+                        pygame.math.Vector2(parent.rect.center)).normalize() * self.SPEED
 
             parent.fpos += move_vec
             parent.rect.center = parent.fpos
@@ -51,12 +53,11 @@ class SimpleAttack(basic.OrbitAttack, basic.State):
             parent.make_attack(self, parent.player.rect.center)
 
 
-STATES = {"MOVE": Move(), "SIMPLEATTACK": SimpleAttack()}
-
-
 class Melee(basic.StateMachine, basic.Entity):
     def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0)):
-        basic.StateMachine.__init__(self, STATES, "MOVE")
+        self.STATES = {"MOVE": Move(), "SIMPLEATTACK": SimpleAttack()}
+
+        basic.StateMachine.__init__(self, self.STATES, "MOVE")
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, 100, (10, 20), True)
 
         self.setup_basics(pos, tsize=(10, 20), tcolor="orange")

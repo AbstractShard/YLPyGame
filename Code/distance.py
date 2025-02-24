@@ -5,11 +5,13 @@ import player
 import basic
 import main
 
-# movement
-SPEED = 45 / main.FPS
-
 
 class Move(basic.State):
+    def __init__(self):
+        super().__init__()
+
+        self.SPEED = 25 / main.FPS
+
     def enter(self, var):
         self.move_angle = random.randint(-45, 45)
 
@@ -19,7 +21,7 @@ class Move(basic.State):
 
         try:
             move_vec = ((pygame.math.Vector2(parent.player.rect.center) -
-                        pygame.math.Vector2(parent.rect.center)).normalize() * SPEED * -1).rotate(self.move_angle)
+                        pygame.math.Vector2(parent.rect.center)).normalize() * self.SPEED * -1).rotate(self.move_angle)
 
             parent.fpos += move_vec
             parent.rect.center = parent.fpos
@@ -61,12 +63,11 @@ class SimpleProjectile(basic.State):
         self.counter["reload"] = self.reload_frames
 
 
-STATES = {"MOVE": Move(), "SIMPLEPROJECTILE": SimpleProjectile()}
-
-
 class Distance(basic.StateMachine, basic.Entity):
     def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0)):
-        basic.StateMachine.__init__(self, STATES, "MOVE")
+        self.STATES = {"MOVE": Move(), "SIMPLEPROJECTILE": SimpleProjectile()}
+
+        basic.StateMachine.__init__(self, self.STATES, "MOVE")
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, 50, (10, 20), True)
 
         self.setup_basics(pos, tsize=(10, 20), tcolor="purple")

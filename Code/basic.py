@@ -434,7 +434,10 @@ class State:
 class StateMachine:
     def __init__(self, states: dict, start_state: str):
         self.states = states.copy()
+
         self.curr_state = states[start_state]
+        self.curr_state.enter(None)
+
         self.nested_states_depth = 25
 
     def change_state(self, new_state_name: str, enter_var=None):
