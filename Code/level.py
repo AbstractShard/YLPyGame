@@ -11,28 +11,42 @@ def get_level_data(path: str) -> list:
     with open(path, encoding="utf-8", mode="r") as file:
         data = list(map(lambda x: x.split(": "), map(str.strip, file.readlines())))
 
-    for i in data[:]:
-        if ("#" in i[1]) or (not i[1].strip()):
-            data.remove(i)
+    replace_equasions = {}
+    replace_data = filter(lambda x: "@" in "".join(x), data)
+
+    data = list(filter(lambda x: ("#" not in "".join(x)) and ("@" not in "".join(x)) and ("".join(x)), data))
+
+    for i in replace_data:
+        equasion = list(map(str.strip, i[0].replace("@", "").split("=")))
+
+        if equasion[0] not in replace_equasions:
+            replace_equasions[equasion[0]] = equasion[1]
 
     for i in range(len(data)):
-        data[i] = eval(f"basic.{data[i][0]}({data[i][1]})")
+        for to_replace in replace_equasions.keys():
+            if to_replace in "".join(data[i]):
+                data[i] = ":".join(data[i]).replace(to_replace, replace_equasions[to_replace]).split(":")
 
     return data
 
 
 class Level:
-    def __init__(self):
+    def __init__(self, path_to_level: str):
         self.PLAYER_GROUP = pygame.sprite.Group()
         self.ENTITY_GROUP = pygame.sprite.Group()
         self.ENVIRONMENT_GROUP = pygame.sprite.Group()
 
         self.PLAYER = player.Player([self.PLAYER_GROUP], [self.ENVIRONMENT_GROUP], [self.ENTITY_GROUP])
+        self.LEVEL_DATA = get_level_data(path_to_level)
 
         self.start()
 
     def start(self):
-        pass
+        for obj_data in self.LEVEL_DATA:
+            to_import = obj_data[0].split(".")[0]
+
+            exec(f"import {to_import}")
+            eval(f"{obj_data[0]}({obj_data[1]})")
 
     def run(self, screen: pygame.Surface):
         pass
@@ -103,7 +117,7 @@ class Wave:
 
 class TestLevel(Level):
     def __init__(self):
-        super().__init__()
+        super().__init__("../Data/Levels/test_level.txt")
 
         self.wave = Wave({melee.Melee: (self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP]),
                           distance.Distance: (self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP])},

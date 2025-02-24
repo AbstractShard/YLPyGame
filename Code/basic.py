@@ -358,6 +358,9 @@ class Entity(Part):
 
             for group in self.collide_with:
                 for sprite in group.sprites():
+                    if not sprite.collider:
+                        continue
+
                     if proj.check_collision(sprite.collider):
                         if proj.do_bounce:
                             proj.bounce()

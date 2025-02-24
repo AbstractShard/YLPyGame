@@ -1,1 +1,17 @@
-Part: groups=[], collide_with=[], pos=(0, 0), tsize=(50, 50), tcolor="red"
+# Sprites
+@ Part = basic.Part
+@ Player = player.Player
+@ Melee = melee.Melee
+@ Distance = distance.Distance
+
+# Groupes
+@ env_group = self.ENVIRONMENT_GROUP
+@ ent_group = self.ENTITY_GROUP
+@ pl_group = self.PLAYER_GROUP
+
+Part: groups=[env_group], collide_with=[], pos=(100, 50), tsize=(50, 50), tcolor="red", have_collision=True
+Part: groups=[env_group], collide_with=[], pos=(150, 125), tsize=(50, 50), tcolor="white", have_collision=True
+
+Player: groups=[pl_group], collide_with=[env_group], to_attack=[ent_group], pos=(250, 75)
+Melee: player=pl_group.sprites()[0], groups=[ent_group], collide_with=[env_group], to_attack=[pl_group], pos=(500, 50)
+Distance: player=pl_group.sprites()[0], groups=[ent_group], collide_with=[env_group], to_attack=[pl_group], pos=(50, 100)

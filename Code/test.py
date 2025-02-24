@@ -41,7 +41,6 @@ if __name__ == "__main__":
     SCREEN = pygame.display.set_mode(SIZE)
 
     TEST_LEVEL = level.TestLevel()
-    TEST_LEVEL.start()
 
     # PLAYER = player.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP], [ENTITY_GROUP])
     # WALL = basic.Part([ENVIRONMENT_GROUP], [], (50, 15), True)
