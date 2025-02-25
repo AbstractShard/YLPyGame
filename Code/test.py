@@ -42,6 +42,16 @@ if __name__ == "__main__":
 
     TEST_LEVEL = level.TestLevel()
 
+    # test_group = pygame.sprite.Group()
+    #
+    # Test = basic.Part([test_group], [], (400, 300), (150, 150), "C:/Users/Богдан/Desktop/Projects/data/dragon.png",
+    #                   5, "IDLE", (0, 0), 2, 8, True, "C:/Users/Богдан/Desktop/Projects/data/dragon.png", collider_size=(150, 150))
+
+    # import player
+    # player_group = pygame.sprite.Group()
+    #
+    # player = player.Player([player_group], [test_group], [])
+
     # PLAYER = player.Player([PLAYER_GROUP], [ENVIRONMENT_GROUP], [ENTITY_GROUP])
     # WALL = basic.Part([ENVIRONMENT_GROUP], [], (50, 15), True)
     # ROTATE_BLOCK = RotateSprite()
@@ -52,6 +62,21 @@ if __name__ == "__main__":
 
     while True:
         TEST_LEVEL.run(SCREEN)
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         import sys
+        #         pygame.quit()
+        #         sys.exit()
+
+        # SCREEN.fill("black")
+
+        # player_group.update()
+        # test_group.update()
+        #
+        # test_group.draw(SCREEN)
+        # player_group.draw(SCREEN)
+
+        # basic.draw_debug(SCREEN, [test_group, player_group])
 
         pygame.display.flip()
         CLOCK.tick(FPS)

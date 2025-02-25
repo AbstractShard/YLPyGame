@@ -3,14 +3,12 @@ import numpy
 import os
 
 # region FUNCTIONS
-def load_image(name: str, colorkey=0):
-    fullname = os.path.join("Data", name)
-
-    if not os.path.isfile(fullname):
-        print("no such file had been found.")
+def load_image(path: str, colorkey=0):
+    if not os.path.exists(path):
+        print(f"Path: {path} doesn't exists")
         return
 
-    image = pygame.image.load(fullname)
+    image = pygame.image.load(path)
 
     if colorkey:
         image = image.convert()
@@ -103,30 +101,87 @@ def draw_debug(screen, groups: list):
 
 # region CLASSES
 class CSprite(pygame.sprite.Sprite):
-    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, relative_pos=None):
-        super().__init__()
+    def __init__(self, groups: list, pos: tuple, size: tuple, img_path: str,
+                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 colorkey=0):
+        super().__init__(*groups)
 
-        self.orig_image = pygame.Surface(size, pygame.SRCALPHA)
-        self.orig_image.fill("white")
+        # other
+        self.orig_image = load_image(img_path, colorkey)
+        self.resize_to = size
 
-        self.image = self.orig_image
+        # animation
+        self.animation_frames = {}
+        self.add_animation(start_animation, self.orig_image, start_apos, start_rows, start_columns)
 
-        self.fpos = start_pos
+        self.aframe_cooldown = aframe_cooldown
+        self.a_data = {"name": start_animation, "a_frame": 0, "frame": self.aframe_cooldown, "play": True}
 
-        self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
+        # basic
+        self.image = self.get_updated_image()
+
+        self.fpos = pos
+        self.rect = pygame.rect.Rect((0, 0), self.image.get_rect().size)
         self.rect.center = self.fpos
 
         self.mask = pygame.mask.from_surface(self.image)
 
+    def add_animation(self, name: str, sheet: pygame.Surface, start_pos: tuple, rows: int, columns: int):
+        a_rect = pygame.Rect(*start_pos, sheet.get_width() // columns, sheet.get_height() // rows)
+
+        for i in range(0, rows * a_rect.height, a_rect.height):
+            for j in range(0, columns * a_rect.width, a_rect.width):
+                frame_location = a_rect.x + j, a_rect.y + i
+
+                if name not in self.animation_frames.keys():
+                    self.animation_frames[name] = [sheet.subsurface(frame_location, a_rect.size)]
+                    continue
+
+                self.animation_frames[name] += [sheet.subsurface(frame_location, a_rect.size)]
+
+    def get_updated_image(self) -> pygame.Surface:
+        return pygame.transform.scale(self.animation_frames[self.a_data["name"]][self.a_data["a_frame"]],  self.resize_to)
+
+    def change_animation(self, name: str):
+        self.a_data = {"name": name, "a_frame": 0, "frame": self.aframe_cooldown, "play": True}
+
+    def control_animation(self, play=True):
+        self.a_data["play"] = play
+
+    def update(self):
+        if not self.a_data["play"]:
+            return
+
+        if self.a_data["frame"] > 0:
+            self.a_data["frame"] -= 1
+            return
+
+        self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]])
+        self.image = self.get_updated_image()
+        self.a_data["frame"] = self.aframe_cooldown
+
+
+class COLCSprite(CSprite):
+    def __init__(self, pos: tuple, size: tuple, collision_type: str, img_path: str,
+                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
+                 relative_pos=(0, 0), colorkey=0):
+        super().__init__([], pos, size, img_path,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         colorkey)
+
         self.collision_type = collision_type
-        self.relative_pos = relative_pos if relative_pos else (0, 0)
+        self.relative_pos = relative_pos
 
 
-class Attack(CSprite):
-    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str,
+class Attack(COLCSprite):
+    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, img_path: str,
                  startup_frames: int, active_frames: int, recovery_frames: int,
-                 damage: int, cooldown: int, applied_invincibility_frames: int, movable=True):
-        super().__init__((0, 0), size, collision_type, relative_pos)
+                 damage: int, cooldown: int, applied_invincibility_frames: int,
+                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
+                 movable=True, colorkey=0):
+        super().__init__((0, 0), size, collision_type, img_path,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         relative_pos, colorkey)
 
         self.startup_frames = startup_frames
         self.active_frames = active_frames
@@ -156,12 +211,14 @@ class Attack(CSprite):
 
 
 class OrbitAttack(Attack):
-    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, length: int,
-                 startup_frames: int, active_frames: int, recovery_frames: int,
-                 damage: int, cooldown: int, applied_invincibility_frames: int):
-        super().__init__(relative_to_pivot_pos, size, "mask",
-                         startup_frames, active_frames, recovery_frames,
-                         damage, cooldown, applied_invincibility_frames, True)
+    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, img_path: str,
+                 length: int, startup_frames: int, active_frames: int, recovery_frames: int,
+                 damage: int, cooldown: int, applied_invincibility_frames: int,
+                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
+        super().__init__(relative_to_pivot_pos, size, "mask", img_path,
+                         startup_frames, active_frames, recovery_frames, damage, cooldown, applied_invincibility_frames,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         True, colorkey)
 
         self.length = length
 
@@ -174,11 +231,14 @@ class OrbitAttack(Attack):
         self.pos_diff = self.rect.center[0] - pivot_pos[0], self.rect.center[1] - pivot_pos[1]
 
 
-class Projectile(CSprite):
-    def __init__(self, start_pos: tuple, size: tuple, collision_type: str,
+class Projectile(COLCSprite):
+    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, img_path: str,
                  direction: pygame.math.Vector2, speed_divided_by_fps: int, destroy_frames: int,
-                 damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0):
-        super().__init__(start_pos, size, collision_type)
+                 damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0,
+                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
+        super().__init__(start_pos, size, collision_type, img_path,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         colorkey=colorkey)
 
         self.dir = direction.normalize()
         self.speed = speed_divided_by_fps
@@ -215,52 +275,26 @@ class Projectile(CSprite):
         self.dir.rotate_ip(-angle * 2)
 
 
-class Part(pygame.sprite.Sprite):
-    def __init__(self, groups: list, collide_with: list, pos: tuple,
-                 have_collision=False, collider_size=(50, 50), collider_pos=None,
-                 img_name="", tsize=(50, 50), tcolor="grey"):
-        super().__init__(*groups)
+class Part(CSprite):
+    def __init__(self, groups: list, collide_with: list, pos: tuple, size: tuple, img_path: str,
+                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 have_collision=False, collider_img_path="", collider_size=(0, 0), collider_pos=(0, 0), colorkey=0):
+        super().__init__(groups, pos, size, img_path,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         colorkey)
 
-        # basics
-        self.orig_image = None
-        self.image = None
-        self.fpos = None
-        self.rect = None
-
-        # collision
         self.collide_with = collide_with.copy()
-        self.collider = CSprite(pos, collider_size, "rect", collider_pos) if have_collision else None
+        self.collider = COLCSprite(pos, collider_size, "rect", collider_img_path, relative_pos=collider_pos) if have_collision else None
 
-        # for testing
-        if self.__class__ == Part:
-            self.setup_basics(pos, img_name=img_name, tsize=tsize, tcolor=tcolor)
-
-    def setup_basics(self, pos: tuple, img_name="", colorkey=0, tsize=(50, 50), tcolor="grey"):
-        if img_name:
-            self.orig_image = load_image(img_name, colorkey)
-        else:
-            self.orig_image = pygame.Surface(tsize, pygame.SRCALPHA)
-            self.orig_image.fill(tcolor)
-
-        self.image = self.orig_image
-
-        self.fpos = pos
-
-        self.rect = pygame.Rect((0, 0), self.image.get_rect().size)
-        self.rect.center = self.fpos
-
-    def update_collider(self, update_mask=False):
+    def update_collider(self):
         self.collider.rect.center = (self.rect.center[0] + self.collider.relative_pos[0],
                                      self.rect.center[1] + self.collider.relative_pos[1])
 
-        if update_mask:
-            self.collider.mask = pygame.mask.from_surface(self.collider.image)
-
-    def check_collisions(self) -> bool:
+    def check_collisions(self):
         for group in self.collide_with:
             for sprite in group.sprites():
                 if not sprite.collider:
-                    continue
+                    return
 
                 if self.collider.collision_type == "rect" and sprite.collider.collision_type == "rect":
                     if self.collider.rect.colliderect(sprite.collider.rect):
@@ -271,16 +305,21 @@ class Part(pygame.sprite.Sprite):
                         return True
 
                 else:
-                    if self.rect.colliderect(sprite.rect):
+                    if self.collider.rect.colliderect(sprite.collider.rect):
                         if pygame.sprite.collide_mask(self.collider, sprite.collider):
                             return True
         return False
 
 
 class Entity(Part):
-    def __init__(self, groups: list, collide_with: list, to_attack: list, pos: tuple, health: int, hurtbox_size: tuple,
-                 have_collision=False, collider_size=(10, 20), collider_pos=None, hurtbox_pos=None):
-        super().__init__(groups, collide_with, pos, have_collision, collider_size, collider_pos)
+    def __init__(self, groups: list, collide_with: list, to_attack: list, pos: tuple, size: tuple, img_path: str,
+                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 health: int, hurtbox_img_path: str, hurtbox_size: tuple,
+                 have_collision=False, collider_img_path="", collider_size=(10, 20), collider_pos=(0, 0),
+                 hurtbox_pos=(0, 0), colorkey=0):
+        super().__init__(groups, collide_with, pos, size, img_path,
+                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         have_collision, collider_img_path, collider_size, collider_pos, colorkey)
 
         self.frame = 0
         self.health = health
@@ -289,12 +328,8 @@ class Entity(Part):
         self.curr_attacks = []
         self.curr_projectiles = []
 
-        self.hurtbox = CSprite(pos, hurtbox_size, "rect", hurtbox_pos)
+        self.hurtbox = COLCSprite(pos, hurtbox_size, "rect", hurtbox_img_path, relative_pos=hurtbox_pos)
         self.invincibility_counter = 0
-
-        # for testing
-        if self.__class__ == Entity:
-            self.setup_basics(pos, tsize=(10, 20), tcolor="green")
 
     def take_damage(self, dmg: int):
         if self.invincibility_counter:
@@ -420,6 +455,8 @@ class Entity(Part):
                 atk.rect.center = self.rect.center[0] + atk.pos_diff[0], self.rect.center[1] + atk.pos_diff[1]
 
     def update(self):
+        super().update()
+
         self.update_frames()
 
 

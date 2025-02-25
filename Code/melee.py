@@ -40,7 +40,8 @@ class Move(basic.State):
 
 class SimpleAttack(basic.OrbitAttack, basic.State):
     def __init__(self):
-        basic.OrbitAttack.__init__(self, (0, 0), (15, 5), 15, 15, 2, 5, 25, 100, 10)
+        basic.OrbitAttack.__init__(self, (0, 0), (15, 5), "../Data/Melee/Hitboxes/simple_attack.png",
+                                   15, 15, 2, 5, 25, 100, 10)
         basic.State.__init__(self)
 
         self.applied_hitstun_frames = 25
@@ -54,13 +55,13 @@ class SimpleAttack(basic.OrbitAttack, basic.State):
 
 
 class Melee(basic.StateMachine, basic.Entity):
-    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0)):
+    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
         self.STATES = {"MOVE": Move(), "SIMPLEATTACK": SimpleAttack()}
 
         basic.StateMachine.__init__(self, self.STATES, "MOVE")
-        basic.Entity.__init__(self, groups, collide_with, to_attack, pos, 100, (10, 20), True)
-
-        self.setup_basics(pos, tsize=(10, 20), tcolor="orange")
+        basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Melee/main.png",
+                              0, "", (0, 0), 1, 1,
+                              100, "../Data/Melee/hurtbox.png", (10, 20), True, "../Data/Melee/collider.png")
 
         self.player = player
 

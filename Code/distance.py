@@ -55,7 +55,7 @@ class SimpleProjectile(basic.State):
             self.counter["reload"] -= 1
             return ""
 
-        proj = basic.Projectile(parent.rect.center, (5, 5), "circle",
+        proj = basic.Projectile(parent.rect.center, (7, 7), "circle", "../Data/Distance/Hitboxes/simple_projectile.png",
                                 pygame.math.Vector2(parent.player.rect.center) - pygame.math.Vector2(parent.rect.center),
                                 150 / main.FPS, 500, 15, 10, True, 50)
 
@@ -64,13 +64,13 @@ class SimpleProjectile(basic.State):
 
 
 class Distance(basic.StateMachine, basic.Entity):
-    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0)):
+    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
         self.STATES = {"MOVE": Move(), "SIMPLEPROJECTILE": SimpleProjectile()}
 
         basic.StateMachine.__init__(self, self.STATES, "MOVE")
-        basic.Entity.__init__(self, groups, collide_with, to_attack, pos, 50, (10, 20), True)
-
-        self.setup_basics(pos, tsize=(10, 20), tcolor="purple")
+        basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Distance/main.png",
+                              0, "", (0, 0), 1, 1,
+                              75, "../Data/Distance/hurtbox.png", (10, 20), True, "../Data/Distance/collider.png")
 
         self.player = player
 

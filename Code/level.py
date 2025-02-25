@@ -103,7 +103,7 @@ class Wave:
         self.counter["spawn"] = random.randint(*self.SPAWN_COOLDOWN_RANGE)
 
     def run(self):
-        if self.used_units >= self.WAVE_LENGTH and not self.curr_units:
+        if self.used_units >= self.WAVE_LENGTH:
             return
 
         for unit in self.curr_units:
