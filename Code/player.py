@@ -99,16 +99,18 @@ class LightAttack(basic.OrbitAttack, basic.State):
 # endregion
 
 class Player(basic.StateMachine, basic.Entity):
-    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
+    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(250, 500)):
         self.STATES = {"IDLE": Idle(), "MOVE": Move(), "HITSTUN": Hitstun(), "LIGHTATTACK": LightAttack()}
 
         basic.StateMachine.__init__(self, self.STATES, "IDLE")
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Player/main.png",
-                              0, "", (0, 0), 1, 1,
+                              "IDLE", pygame.Rect(0, 0, 10, 20), 25, 9, 2,
                               200, "../Data/Player/hurtbox.png", (10, 20),
                               True, "../Data/Player/collider.png")
 
     def update(self):
+        basic.CSprite.update(self)
+
         self.update_frames()
 
         if self.curr_attacks:

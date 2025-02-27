@@ -70,12 +70,14 @@ class Distance(basic.StateMachine, basic.Entity):
 
         basic.StateMachine.__init__(self, self.STATES, "MOVE")
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Distance/main.png",
-                              0, "", (0, 0), 1, 1,
+                              "", pygame.Rect(0, 0, 10, 20), 0, 1, 1,
                               75, "../Data/Distance/hurtbox.png", (10, 20), True, "../Data/Distance/collider.png")
 
         self.player = player
 
     def update(self):
+        basic.CSprite.update(self)
+
         self.update_frames()
 
         if self.curr_projectiles:

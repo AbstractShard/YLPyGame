@@ -102,7 +102,7 @@ def draw_debug(screen, groups: list):
 # region CLASSES
 class CSprite(pygame.sprite.Sprite):
     def __init__(self, groups: list, pos: tuple, size: tuple, img_path: str,
-                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 start_aname: str, start_arect: pygame.Rect, start_framerate: int, start_rows: int, start_columns: int,
                  colorkey=0):
         super().__init__(*groups)
 
@@ -112,10 +112,9 @@ class CSprite(pygame.sprite.Sprite):
 
         # animation
         self.animation_frames = {}
-        self.add_animation(start_animation, self.orig_image, start_apos, start_rows, start_columns)
+        self.add_animation(start_aname, self.orig_image, start_arect, start_framerate, start_rows, start_columns)
 
-        self.aframe_cooldown = aframe_cooldown
-        self.a_data = {"name": start_animation, "a_frame": 0, "frame": self.aframe_cooldown, "play": True}
+        self.a_data = {"name": start_aname, "a_frame": 0, "frame": self.animation_frames[start_aname]["framerate"], "play": True}
 
         # basic
         self.image = self.get_updated_image()
@@ -126,24 +125,25 @@ class CSprite(pygame.sprite.Sprite):
 
         self.mask = pygame.mask.from_surface(self.image)
 
-    def add_animation(self, name: str, sheet: pygame.Surface, start_pos: tuple, rows: int, columns: int):
-        a_rect = pygame.Rect(*start_pos, sheet.get_width() // columns, sheet.get_height() // rows)
+    def add_animation(self, name: str, sheet: pygame.Surface, animation_rect: pygame.Rect, framerate: int, rows: int, columns: int):
+        arect = animation_rect.copy()
 
-        for i in range(0, rows * a_rect.height, a_rect.height):
-            for j in range(0, columns * a_rect.width, a_rect.width):
-                frame_location = a_rect.x + j, a_rect.y + i
+        for i in range(0, columns * arect.height, arect.height):
+            for j in range(0, rows * arect.width, arect.width):
+                frame_location = arect.x + j, arect.y + i
 
                 if name not in self.animation_frames.keys():
-                    self.animation_frames[name] = [sheet.subsurface(frame_location, a_rect.size)]
+                    self.animation_frames[name] = {"animation": [sheet.subsurface(frame_location, arect.size)],
+                                                   "framerate": framerate}
                     continue
 
-                self.animation_frames[name] += [sheet.subsurface(frame_location, a_rect.size)]
+                self.animation_frames[name]["animation"] += [sheet.subsurface(frame_location, arect.size)]
 
     def get_updated_image(self) -> pygame.Surface:
-        return pygame.transform.scale(self.animation_frames[self.a_data["name"]][self.a_data["a_frame"]],  self.resize_to)
+        return pygame.transform.scale(self.animation_frames[self.a_data["name"]]["animation"][self.a_data["a_frame"]], self.resize_to)
 
     def change_animation(self, name: str):
-        self.a_data = {"name": name, "a_frame": 0, "frame": self.aframe_cooldown, "play": True}
+        self.a_data = {"name": name, "a_frame": 0, "frame": self.animation_frames[name]["framerate"], "play": True}
 
     def control_animation(self, play=True):
         self.a_data["play"] = play
@@ -156,18 +156,19 @@ class CSprite(pygame.sprite.Sprite):
             self.a_data["frame"] -= 1
             return
 
-        self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]])
+        self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]]["animation"])
         self.image = self.get_updated_image()
-        self.a_data["frame"] = self.aframe_cooldown
+        self.a_data["frame"] = self.animation_frames[self.a_data["name"]]["framerate"]
 
 
 class COLCSprite(CSprite):
     def __init__(self, pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
-                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
+                 start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  relative_pos=(0, 0), colorkey=0):
         super().__init__([], pos, size, img_path,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          colorkey)
+
         self.collision_image = load_image(collision_img_path)
         self.mask = pygame.mask.from_surface(self.collision_image)
 
@@ -179,10 +180,10 @@ class Attack(COLCSprite):
     def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
                  startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
-                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
+                 start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  movable=True, colorkey=0):
         super().__init__((0, 0), size, collision_type, img_path, collision_img_path,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          relative_pos, colorkey)
 
         self.startup_frames = startup_frames
@@ -232,10 +233,11 @@ class OrbitAttack(Attack):
     def __init__(self, relative_to_pivot_pos: tuple, size: tuple, img_path: str, collision_img_path: str,
                  length: int, startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
-                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
+                 start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
+                 colorkey=0):
         super().__init__(relative_to_pivot_pos, size, "mask", img_path, collision_img_path,
                          startup_frames, active_frames, recovery_frames, damage, cooldown, applied_invincibility_frames,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          True, colorkey)
 
         self.length = length
@@ -253,9 +255,10 @@ class Projectile(COLCSprite):
     def __init__(self, start_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
                  direction: pygame.math.Vector2, speed_divided_by_fps: int, destroy_frames: int,
                  damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0,
-                 aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
+                 start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
+                 colorkey=0):
         super().__init__(start_pos, size, collision_type, img_path, collision_img_path,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          colorkey=colorkey)
 
         self.dir = direction.normalize()
@@ -295,10 +298,10 @@ class Projectile(COLCSprite):
 
 class Part(CSprite):
     def __init__(self, groups: list, collide_with: list, pos: tuple, size: tuple, img_path: str,
-                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 start_aname: str, start_arect: pygame.Rect, start_framerate: int, start_rows: int, start_columns: int,
                  have_collision=False, collider_img_path="", collider_size=(0, 0), collider_pos=(0, 0), colorkey=0):
         super().__init__(groups, pos, size, img_path,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          colorkey)
 
         self.collide_with = collide_with.copy()
@@ -331,12 +334,12 @@ class Part(CSprite):
 
 class Entity(Part):
     def __init__(self, groups: list, collide_with: list, to_attack: list, pos: tuple, size: tuple, img_path: str,
-                 aframe_cooldown: int, start_animation: str, start_apos: tuple, start_rows: int, start_columns: int,
+                 start_aname: str, start_arect: pygame.Rect, start_framerate: int, start_rows: int, start_columns: int,
                  health: int, hurtbox_img_path: str, hurtbox_size: tuple,
                  have_collision=False, collider_img_path="", collider_size=(10, 20), collider_pos=(0, 0),
                  hurtbox_pos=(0, 0), colorkey=0):
         super().__init__(groups, collide_with, pos, size, img_path,
-                         aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
+                         start_aname, start_arect, start_framerate, start_rows, start_columns,
                          have_collision, collider_img_path, collider_size, collider_pos, colorkey)
 
         self.frame = 0
