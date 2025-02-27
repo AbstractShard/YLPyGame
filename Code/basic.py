@@ -75,7 +75,7 @@ def draw_debug(screen, groups: list):
                         atk_color = pygame.Color("blue")
 
                     if isinstance(atk, OrbitAttack):
-                        pix_arr = pygame.surfarray.pixels3d(atk.collision_image)
+                        pix_arr = pygame.surfarray.pixels3d(atk.image)
 
                         for i in range(len(pix_arr)):
                             for j in range(len(pix_arr[i])):
@@ -83,7 +83,7 @@ def draw_debug(screen, groups: list):
 
                         del pix_arr
 
-                        screen.blit(atk.collision_image, atk.rect.topleft)
+                        screen.blit(atk.image, atk.rect.topleft)
                         continue
 
                     atk_image = pygame.Surface(atk.rect.size, pygame.SRCALPHA)
@@ -115,7 +115,7 @@ class CSprite(pygame.sprite.Sprite):
         self.add_animation(start_aname, self.orig_image, start_arect, start_framerate, start_rows, start_columns)
 
         self.a_data = {"name": start_aname, "a_frame": 0, "frame": self.animation_frames[start_aname]["framerate"],
-                       "play": True, "cycle": False}
+                       "play": True, "cycle": False, "reverse": False, "ended": False}
 
         # basic
         self.image = self.get_updated_image()
@@ -143,52 +143,72 @@ class CSprite(pygame.sprite.Sprite):
     def get_updated_image(self) -> pygame.Surface:
         return pygame.transform.scale(self.animation_frames[self.a_data["name"]]["animation"][self.a_data["a_frame"]], self.resize_to)
 
-    def change_animation(self, name: str, play=True, cycle=False):
-        self.a_data = {"name": name, "a_frame": 0, "frame": self.animation_frames[name]["framerate"],
-                       "play": play, "cycle": cycle}
+    def change_animation(self, name: str, play=True, cycle=False, reverse=False):
+        self.a_data = {"name": name,
+                       "a_frame": 0 if not reverse else len(self.animation_frames[name]["animation"]) - 1,
+                       "frame": self.animation_frames[name]["framerate"],
+                       "play": play, "cycle": cycle, "reverse": reverse, "ended": False}
 
-    def control_animation(self, play=True, cycle=False):
+    def control_animation(self, play=True, cycle=False, reverse=False):
         self.a_data["play"] = play
         self.a_data["cycle"] = cycle
+        self.a_data["reverse"] = reverse
 
     def update(self):
         if not self.a_data["play"]:
+            self.a_data["ended"] = True
             return
+
+        self.a_data["ended"] = False
 
         if self.a_data["frame"] > 0:
             self.a_data["frame"] -= 1
             return
 
-        if not self.a_data["cycle"] and self.a_data["a_frame"] == len(self.animation_frames[self.a_data["name"]]["animation"]) - 1:
+        if not self.a_data["reverse"]:
+            if not self.a_data["cycle"] and self.a_data["a_frame"] == len(self.animation_frames[self.a_data["name"]]["animation"]) - 1:
+                self.a_data["ended"] = True
+                return
+
+            self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]]["animation"])
+            self.image = self.get_updated_image()
+            self.a_data["frame"] = self.animation_frames[self.a_data["name"]]["framerate"]
             return
 
-        self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]]["animation"])
+        if not self.a_data["cycle"] and not self.a_data["a_frame"]:
+            self.a_data["ended"] = True
+            return
+
+        self.a_data["a_frame"] = (self.a_data["a_frame"] - 1) % len(self.animation_frames[self.a_data["name"]]["animation"])
         self.image = self.get_updated_image()
         self.a_data["frame"] = self.animation_frames[self.a_data["name"]]["framerate"]
 
 
 class COLCSprite(CSprite):
-    def __init__(self, pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
+    def __init__(self, pos: tuple, size: tuple, collision_type: str, collision_img_path: str, display_img_path: str,
                  start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  relative_pos=(0, 0), colorkey=0):
-        super().__init__([], pos, size, img_path,
-                         start_aname, start_arect, start_framerate, start_rows, start_columns,
+        super().__init__([], pos, size, collision_img_path,
+                         "", pygame.Rect(0, 0, *size), 0, 1, 1,
                          colorkey)
 
-        self.collision_image = load_image(collision_img_path)
-        self.mask = pygame.mask.from_surface(self.collision_image)
-
+        # attacks
         self.collision_type = collision_type
         self.relative_pos = relative_pos
 
+        # animation
+        self.display = CSprite([], pos, size, display_img_path,
+                               start_aname, start_arect, start_framerate, start_rows, start_columns,
+                               colorkey)
+
 
 class Attack(COLCSprite):
-    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
+    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, collision_img_path: str, display_img_path: str,
                  startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
                  start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  movable=True, colorkey=0):
-        super().__init__((0, 0), size, collision_type, img_path, collision_img_path,
+        super().__init__((0, 0), size, collision_type, collision_img_path, display_img_path,
                          start_aname, start_arect, start_framerate, start_rows, start_columns,
                          relative_pos, colorkey)
 
@@ -207,11 +227,16 @@ class Attack(COLCSprite):
 
     def setup(self, pos: tuple):
         self.rect.center = pos
+        self.display.rect.center = pos
 
         self.counter = {"startup": self.startup_frames, "active": self.active_frames, "recovery": self.recovery_frames,
                         "cooldown": self.cooldown}
 
         self.pos_diff = self.rect.center[0] - pos[0], self.rect.center[1] - pos[1]
+
+    def move(self, pos: tuple):
+        self.rect.center = pos
+        self.display.rect.center = pos
 
     def check_collision(self, with_what) -> bool:
         if self.collision_type == "rect" and with_what.collision_type == "rect":
@@ -236,12 +261,12 @@ class Attack(COLCSprite):
 
 
 class OrbitAttack(Attack):
-    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, img_path: str, collision_img_path: str,
+    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, collision_img_path: str, display_img_path: str,
                  length: int, startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
                  start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  colorkey=0):
-        super().__init__(relative_to_pivot_pos, size, "mask", img_path, collision_img_path,
+        super().__init__(relative_to_pivot_pos, size, "mask", collision_img_path, display_img_path,
                          startup_frames, active_frames, recovery_frames, damage, cooldown, applied_invincibility_frames,
                          start_aname, start_arect, start_framerate, start_rows, start_columns,
                          True, colorkey)
@@ -251,19 +276,21 @@ class OrbitAttack(Attack):
     def setup_orbit(self, pivot_pos: tuple, target: tuple):
         super().setup(pivot_pos)
 
-        self.collision_image, self.rect = get_rotated_around_pivot(self.orig_image, self.collision_image, self.rect.center, target, self.length)
-        self.mask = pygame.mask.from_surface(self.collision_image)
+        self.image, self.rect = get_rotated_around_pivot(self.orig_image, self.image, self.rect.center, target, self.length)
+        self.display.rect.center = self.rect.center
+
+        self.mask = pygame.mask.from_surface(self.image)
 
         self.pos_diff = self.rect.center[0] - pivot_pos[0], self.rect.center[1] - pivot_pos[1]
 
 
 class Projectile(COLCSprite):
-    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
+    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, collision_img_path: str, display_img_path: str,
                  direction: pygame.math.Vector2, speed_divided_by_fps: int, destroy_frames: int,
                  damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0,
                  start_aname="", start_arect=pygame.Rect(0, 0, 1, 1), start_framerate=0, start_rows=1, start_columns=1,
                  colorkey=0):
-        super().__init__(start_pos, size, collision_type, img_path, collision_img_path,
+        super().__init__(start_pos, size, collision_type, collision_img_path, display_img_path,
                          start_aname, start_arect, start_framerate, start_rows, start_columns,
                          colorkey=colorkey)
 
@@ -280,6 +307,9 @@ class Projectile(COLCSprite):
     def move(self):
         self.fpos += self.dir * self.speed
         self.rect.center = self.fpos
+
+        self.display.fpos += self.dir * self.speed
+        self.display.rect.center = self.display.fpos
 
     def check_collision(self, with_what) -> bool:
         if self.collision_type == "rect" and with_what.collision_type == "rect":
@@ -463,7 +493,7 @@ class Entity(Part):
 
         for atk in self.curr_attacks:
             if atk.movable:
-                atk.rect.center = self.rect.center[0] + atk.pos_diff[0], self.rect.center[1] + atk.pos_diff[1]
+                atk.move(self.rect.center[0] + atk.pos_diff[0], self.rect.center[1] + atk.pos_diff[1])
 
     def update(self):
         super().update()

@@ -12,8 +12,11 @@ class Move(basic.State):
 
         self.SPEED = 25 / main.FPS
 
+        self.parent.add_animation("MOVE", self.parent.orig_image, pygame.Rect(0, 20, 10, 20), 3, 3, 1)
+
     def enter(self, var):
         self.move_angle = random.randint(-45, 45)
+        self.parent.change_animation("MOVE")
 
     def run(self) -> str:
         if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) >= 70:
@@ -47,7 +50,13 @@ class SimpleProjectile(basic.State):
         self.reload_frames = 100
         self.counter = {"reload": self.reload_frames}
 
+    def enter(self, var):
+        self.parent.change_animation("MOVE", reverse=True)
+
     def run(self) -> str:
+        if self.parent.a_data["name"] == "MOVE" and self.parent.a_data["ended"]:
+            self.parent.change_animation("SIMPLEPROJECTILE", cycle=True)
+
         if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) <= 70:
             return "MOVE"
 
@@ -65,15 +74,18 @@ class SimpleProjectile(basic.State):
 
 
 class Distance(basic.StateMachine, basic.Entity):
-    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
+    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(50, 100)):
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Distance/main.png",
-                              "", pygame.Rect(0, 0, 10, 20), 0, 1, 1,
-                              75, "../Data/Distance/hurtbox.png", (10, 20), True, "../Data/Distance/collider.png")
+                              "SIMPLEPROJECTILE", pygame.Rect(0, 0, 10, 20), 7, 8, 1,
+                              75, "../Data/Distance/hurtbox.png", (10, 20),
+                              True, "../Data/Distance/collider.png")
 
         self.STATES = {"MOVE": Move(self), "SIMPLEPROJECTILE": SimpleProjectile(self)}
         basic.StateMachine.__init__(self, self.STATES, "MOVE")
 
         self.player = player
+
+        self.control_animation(cycle=True)
 
     def update(self):
         basic.CSprite.update(self)

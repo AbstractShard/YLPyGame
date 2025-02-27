@@ -80,7 +80,7 @@ class Hitstun(basic.State):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.parent.add_animation("HITSTUN", self.parent.orig_image, pygame.Rect(0, 20, 10, 20), 3, 6, 1)
+        self.parent.add_animation("HITSTUN", self.parent.orig_image, pygame.Rect(0, 20, 10, 20), 3, 5, 1)
 
     def enter(self, var):
         self.hitstun_counter = var if var is not None else 0
@@ -109,7 +109,7 @@ class LightAttack(basic.OrbitAttack, basic.State):
 # endregion
 
 class Player(basic.StateMachine, basic.Entity):
-    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(250, 500)):
+    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Player/main.png",
                               "IDLE", pygame.Rect(0, 0, 10, 20), 7, 20, 1,
                               200, "../Data/Player/hurtbox.png", (10, 20),

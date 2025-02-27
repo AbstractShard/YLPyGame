@@ -58,13 +58,15 @@ class SimpleAttack(basic.OrbitAttack, basic.State):
 class Melee(basic.StateMachine, basic.Entity):
     def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Melee/main.png",
-                              "", pygame.Rect(0, 0, 10, 20), 0, 1, 1,
+                              "MOVE", pygame.Rect(0, 0, 10, 20), 5, 8, 2,
                               100, "../Data/Melee/hurtbox.png", (10, 20), True, "../Data/Melee/collider.png")
 
         self.STATES = {"MOVE": Move(self), "SIMPLEATTACK": SimpleAttack(self)}
         basic.StateMachine.__init__(self, self.STATES, "MOVE")
 
         self.player = player
+
+        self.control_animation(cycle=True)
 
     def update(self):
         basic.CSprite.update(self)
