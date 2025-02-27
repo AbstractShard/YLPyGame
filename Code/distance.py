@@ -55,7 +55,8 @@ class SimpleProjectile(basic.State):
             self.counter["reload"] -= 1
             return ""
 
-        proj = basic.Projectile(parent.rect.center, (7, 7), "circle", "../Data/Distance/Hitboxes/simple_projectile.png",
+        proj = basic.Projectile(parent.rect.center, (7, 7), "circle",
+                                "../Data/Distance/Hitboxes/simple_projectile.png", "../Data/Distance/Hitboxes/simple_projectile.png",
                                 pygame.math.Vector2(parent.player.rect.center) - pygame.math.Vector2(parent.rect.center),
                                 150 / main.FPS, 500, 15, 10, True, 50)
 

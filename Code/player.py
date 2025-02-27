@@ -85,7 +85,8 @@ class Hitstun(basic.State):
 
 class LightAttack(basic.OrbitAttack, basic.State):
     def __init__(self):
-        basic.OrbitAttack.__init__(self, (0, 0), (15, 15), "../Data/Player/Hitboxes/light_attack.png",
+        basic.OrbitAttack.__init__(self, (0, 0), (15, 15),
+                                   "../Data/Player/Hitboxes/light_attack.png", "../Data/Player/Hitboxes/light_attack.png",
                                    15, 2, 1, 3, 25, 50, 50)
         basic.State.__init__(self)
 

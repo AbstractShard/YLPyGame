@@ -34,7 +34,7 @@ def get_rotated(original_image: pygame.Surface, current_rect: pygame.Rect, angle
 
 
 def get_rotated_around_pivot(original_image: pygame.Surface, current_image: pygame.Surface,
-                             pivot: tuple, target: tuple, length: int):
+                             pivot: tuple, target: tuple, length: int) -> (pygame.Surface, pygame.Rect):
     offset = pygame.math.Vector2()
     offset.from_polar((length, 0))
 
@@ -75,7 +75,7 @@ def draw_debug(screen, groups: list):
                         atk_color = pygame.Color("blue")
 
                     if isinstance(atk, OrbitAttack):
-                        pix_arr = pygame.surfarray.pixels3d(atk.image)
+                        pix_arr = pygame.surfarray.pixels3d(atk.collision_image)
 
                         for i in range(len(pix_arr)):
                             for j in range(len(pix_arr[i])):
@@ -83,7 +83,7 @@ def draw_debug(screen, groups: list):
 
                         del pix_arr
 
-                        screen.blit(atk.image, atk.rect.topleft)
+                        screen.blit(atk.collision_image, atk.rect.topleft)
                         continue
 
                     atk_image = pygame.Surface(atk.rect.size, pygame.SRCALPHA)
@@ -162,24 +162,26 @@ class CSprite(pygame.sprite.Sprite):
 
 
 class COLCSprite(CSprite):
-    def __init__(self, pos: tuple, size: tuple, collision_type: str, img_path: str,
+    def __init__(self, pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
                  aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
                  relative_pos=(0, 0), colorkey=0):
         super().__init__([], pos, size, img_path,
                          aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
                          colorkey)
+        self.collision_image = load_image(collision_img_path)
+        self.mask = pygame.mask.from_surface(self.collision_image)
 
         self.collision_type = collision_type
         self.relative_pos = relative_pos
 
 
 class Attack(COLCSprite):
-    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, img_path: str,
+    def __init__(self, relative_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
                  startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
                  aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1,
                  movable=True, colorkey=0):
-        super().__init__((0, 0), size, collision_type, img_path,
+        super().__init__((0, 0), size, collision_type, img_path, collision_img_path,
                          aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
                          relative_pos, colorkey)
 
@@ -204,6 +206,22 @@ class Attack(COLCSprite):
 
         self.pos_diff = self.rect.center[0] - pos[0], self.rect.center[1] - pos[1]
 
+    def check_collision(self, with_what) -> bool:
+        if self.collision_type == "rect" and with_what.collision_type == "rect":
+            if self.rect.colliderect(with_what.rect):
+                return True
+
+        elif self.collision_type == "circle" and with_what.collision_type == "circle":
+            if pygame.sprite.collide_circle(self, with_what):
+                return True
+
+        else:
+            if self.rect.colliderect(with_what.rect):
+                if pygame.sprite.collide_mask(self, with_what):
+                    return True
+
+        return False
+
     def attack_ended(self) -> bool:
         if self.counter["recovery"] <= 0 < self.counter["cooldown"]:
             return True
@@ -211,11 +229,11 @@ class Attack(COLCSprite):
 
 
 class OrbitAttack(Attack):
-    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, img_path: str,
+    def __init__(self, relative_to_pivot_pos: tuple, size: tuple, img_path: str, collision_img_path: str,
                  length: int, startup_frames: int, active_frames: int, recovery_frames: int,
                  damage: int, cooldown: int, applied_invincibility_frames: int,
                  aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
-        super().__init__(relative_to_pivot_pos, size, "mask", img_path,
+        super().__init__(relative_to_pivot_pos, size, "mask", img_path, collision_img_path,
                          startup_frames, active_frames, recovery_frames, damage, cooldown, applied_invincibility_frames,
                          aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
                          True, colorkey)
@@ -225,18 +243,18 @@ class OrbitAttack(Attack):
     def setup_orbit(self, pivot_pos: tuple, target: tuple):
         super().setup(pivot_pos)
 
-        self.image, self.rect = get_rotated_around_pivot(self.orig_image, self.image, self.rect.center, target, self.length)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.collision_image, self.rect = get_rotated_around_pivot(self.orig_image, self.collision_image, self.rect.center, target, self.length)
+        self.mask = pygame.mask.from_surface(self.collision_image)
 
         self.pos_diff = self.rect.center[0] - pivot_pos[0], self.rect.center[1] - pivot_pos[1]
 
 
 class Projectile(COLCSprite):
-    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, img_path: str,
+    def __init__(self, start_pos: tuple, size: tuple, collision_type: str, img_path: str, collision_img_path: str,
                  direction: pygame.math.Vector2, speed_divided_by_fps: int, destroy_frames: int,
                  damage: int, applied_invincibility_frames: int, do_bounce=False, applied_hitstun_frames=0,
                  aframe_cooldown=0, start_animation="", start_apos=(0, 0), start_rows=1, start_columns=1, colorkey=0):
-        super().__init__(start_pos, size, collision_type, img_path,
+        super().__init__(start_pos, size, collision_type, img_path, collision_img_path,
                          aframe_cooldown, start_animation, start_apos, start_rows, start_columns,
                          colorkey=colorkey)
 
@@ -284,7 +302,7 @@ class Part(CSprite):
                          colorkey)
 
         self.collide_with = collide_with.copy()
-        self.collider = COLCSprite(pos, collider_size, "rect", collider_img_path, relative_pos=collider_pos) if have_collision else None
+        self.collider = COLCSprite(pos, collider_size, "rect", collider_img_path, collider_img_path, relative_pos=collider_pos) if have_collision else None
 
     def update_collider(self):
         self.collider.rect.center = (self.rect.center[0] + self.collider.relative_pos[0],
@@ -328,7 +346,7 @@ class Entity(Part):
         self.curr_attacks = []
         self.curr_projectiles = []
 
-        self.hurtbox = COLCSprite(pos, hurtbox_size, "rect", hurtbox_img_path, relative_pos=hurtbox_pos)
+        self.hurtbox = COLCSprite(pos, hurtbox_size, "rect", hurtbox_img_path, hurtbox_img_path, relative_pos=hurtbox_pos)
         self.invincibility_counter = 0
 
     def take_damage(self, dmg: int):
@@ -354,22 +372,6 @@ class Entity(Part):
         self.curr_projectiles.append(proj)
 
     def check_attacks(self):
-        def check_attack_collision(atk: Attack, with_what) -> bool:
-            if atk.collision_type == "rect" and with_what.collision_type == "rect":
-                if atk.rect.colliderect(with_what.rect):
-                    return True
-
-            elif atk.collision_type == "circle" and with_what.collision_type == "circle":
-                if pygame.sprite.collide_circle(atk, with_what):
-                    return True
-
-            else:
-                if atk.rect.colliderect(with_what.rect):
-                    if pygame.sprite.collide_mask(atk, with_what):
-                        return True
-
-            return False
-
         collided_attacks = []
 
         for atk in self.curr_attacks:
@@ -378,7 +380,7 @@ class Entity(Part):
 
             for group in self.to_attack:
                 for sprite in group.sprites():
-                    if check_attack_collision(atk, sprite.hurtbox) and not sprite.invincibility_counter:
+                    if atk.check_collision(sprite.hurtbox) and not sprite.invincibility_counter:
                         sprite.take_damage(atk.damage)
                         sprite.invincibility_counter = atk.applied_invincibility_frames
                         collided_attacks.append(atk)

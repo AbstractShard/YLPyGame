@@ -1,11 +1,132 @@
 import pygame
 
 import level
+import melee
+import basic
+import distance
 
 # MAIN
 SIZE = WIDTH, HEIGHT = 800, 600
 FPS = 60
 CLOCK = pygame.time.Clock()
+
+class IntroLevel(level.Level):
+    def __init__(self):
+        super().__init__("/Users/Богдан/Downloads/introleveltest.txt")
+
+    def run(self, screen: pygame.Surface):
+        global curr_level
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.terminate()
+
+            if event.type == pygame.KEYDOWN and event.dict["key"] == pygame.K_SPACE:
+                curr_level += 1
+
+        screen.fill("black")
+
+        self.ENVIRONMENT_GROUP.draw(screen)
+
+
+class FirstLevel(level.Level):
+    def __init__(self):
+        super().__init__("/Users/Богдан/Downloads/firstleveltest.txt")
+
+        self.PLAYER.fpos = (400, 300)
+        self.PLAYER.rect.center = self.PLAYER.fpos
+
+        self.PLAYER.update_collider()
+        self.PLAYER.update_boxes()
+
+        self.wave = level.Wave({melee.Melee: [self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP]]},
+                          5, 2, pygame.rect.Rect(0, 0, 790, 590), [50, 150])
+
+    def run(self, screen: pygame.Surface):
+        global curr_level, INTRO_LEVEL, FIRST_LEVEL
+
+        self.check_events()
+
+        if self.wave.used_units >= self.wave.WAVE_LENGTH:
+            curr_level += 1
+
+        if not self.PLAYER.alive():
+            INTRO_LEVEL = IntroLevel()
+            FIRST_LEVEL = FirstLevel()
+            curr_level = 0
+
+        screen.fill("black")
+
+        self.wave.run()
+
+        self.PLAYER_GROUP.update()
+        self.ENTITY_GROUP.update()
+
+        self.ENVIRONMENT_GROUP.draw(screen)
+        self.ENTITY_GROUP.draw(screen)
+        self.PLAYER_GROUP.draw(screen)
+
+        basic.draw_debug(screen, [self.ENTITY_GROUP, self.PLAYER_GROUP])
+
+
+class SecondLevel(level.Level):
+    def __init__(self):
+        super().__init__("/Users/Богдан/Downloads/secondleveltest.txt")
+
+        self.PLAYER.fpos = (400, 300)
+        self.PLAYER.rect.center = self.PLAYER.fpos
+
+        self.PLAYER.update_collider()
+        self.PLAYER.update_boxes()
+
+        self.wave = level.Wave({melee.Melee: [self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP]],
+                                distance.Distance: [self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP]]},
+                          10, 2, pygame.rect.Rect(0, 0, 790, 590), [50, 150])
+
+    def run(self, screen: pygame.Surface):
+        global curr_level, INTRO_LEVEL, FIRST_LEVEL, SECOND_LEVEL
+
+        self.check_events()
+
+        if self.wave.used_units >= self.wave.WAVE_LENGTH:
+            curr_level += 1
+
+        if not self.PLAYER.alive():
+            INTRO_LEVEL = IntroLevel()
+            FIRST_LEVEL = FirstLevel()
+            SECOND_LEVEL = SecondLevel()
+            curr_level = 0
+
+        screen.fill("black")
+
+        self.wave.run()
+
+        self.PLAYER_GROUP.update()
+        self.ENTITY_GROUP.update()
+
+        self.ENVIRONMENT_GROUP.draw(screen)
+        self.ENTITY_GROUP.draw(screen)
+        self.PLAYER_GROUP.draw(screen)
+
+        basic.draw_debug(screen, [self.ENTITY_GROUP, self.PLAYER_GROUP])
+
+class FinalLevel(level.Level):
+    def __init__(self):
+        super().__init__("/Users/Богдан/Downloads/finalleveltest.txt")
+
+    def run(self, screen: pygame.Surface):
+        global curr_level
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.terminate()
+
+            if event.type == pygame.KEYDOWN and event.dict["key"] == pygame.K_SPACE:
+                curr_level += 1
+
+        screen.fill("black")
+
+        self.ENVIRONMENT_GROUP.draw(screen)
 
 # class RotateSprite(pygame.sprite.Sprite):
 #     def __init__(self):
@@ -40,7 +161,11 @@ if __name__ == "__main__":
 
     SCREEN = pygame.display.set_mode(SIZE)
 
-    TEST_LEVEL = level.TestLevel()
+    curr_level = 0
+    INTRO_LEVEL = IntroLevel()
+    FIRST_LEVEL = FirstLevel()
+    SECOND_LEVEL = SecondLevel()
+    FINAL_LEVEL = FinalLevel()
 
     # test_group = pygame.sprite.Group()
     #
@@ -61,7 +186,14 @@ if __name__ == "__main__":
     #     distance.Distance(PLAYER, [ENTITY_GROUP], [ENVIRONMENT_GROUP], [PLAYER_GROUP], (i, 150))
 
     while True:
-        TEST_LEVEL.run(SCREEN)
+        if not curr_level:
+            INTRO_LEVEL.run(SCREEN)
+        elif curr_level == 1:
+            FIRST_LEVEL.run(SCREEN)
+        elif curr_level == 2:
+            SECOND_LEVEL.run(SCREEN)
+        else:
+            FINAL_LEVEL.run(SCREEN)
         # for event in pygame.event.get():
         #     if event.type == pygame.QUIT:
         #         import sys

@@ -40,7 +40,8 @@ class Move(basic.State):
 
 class SimpleAttack(basic.OrbitAttack, basic.State):
     def __init__(self):
-        basic.OrbitAttack.__init__(self, (0, 0), (15, 5), "../Data/Melee/Hitboxes/simple_attack.png",
+        basic.OrbitAttack.__init__(self, (0, 0), (15, 5),
+                                   "../Data/Melee/Hitboxes/simple_attack.png", "../Data/Melee/Hitboxes/simple_attack.png",
                                    15, 15, 2, 5, 25, 100, 10)
         basic.State.__init__(self)
 
