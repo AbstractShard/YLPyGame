@@ -114,7 +114,8 @@ class CSprite(pygame.sprite.Sprite):
         self.animation_frames = {}
         self.add_animation(start_aname, self.orig_image, start_arect, start_framerate, start_rows, start_columns)
 
-        self.a_data = {"name": start_aname, "a_frame": 0, "frame": self.animation_frames[start_aname]["framerate"], "play": True}
+        self.a_data = {"name": start_aname, "a_frame": 0, "frame": self.animation_frames[start_aname]["framerate"],
+                       "play": True, "cycle": False}
 
         # basic
         self.image = self.get_updated_image()
@@ -142,11 +143,13 @@ class CSprite(pygame.sprite.Sprite):
     def get_updated_image(self) -> pygame.Surface:
         return pygame.transform.scale(self.animation_frames[self.a_data["name"]]["animation"][self.a_data["a_frame"]], self.resize_to)
 
-    def change_animation(self, name: str):
-        self.a_data = {"name": name, "a_frame": 0, "frame": self.animation_frames[name]["framerate"], "play": True}
+    def change_animation(self, name: str, play=True, cycle=False):
+        self.a_data = {"name": name, "a_frame": 0, "frame": self.animation_frames[name]["framerate"],
+                       "play": play, "cycle": cycle}
 
-    def control_animation(self, play=True):
+    def control_animation(self, play=True, cycle=False):
         self.a_data["play"] = play
+        self.a_data["cycle"] = cycle
 
     def update(self):
         if not self.a_data["play"]:
@@ -154,6 +157,9 @@ class CSprite(pygame.sprite.Sprite):
 
         if self.a_data["frame"] > 0:
             self.a_data["frame"] -= 1
+            return
+
+        if not self.a_data["cycle"] and self.a_data["a_frame"] == len(self.animation_frames[self.a_data["name"]]["animation"]) - 1:
             return
 
         self.a_data["a_frame"] = (self.a_data["a_frame"] + 1) % len(self.animation_frames[self.a_data["name"]]["animation"])
@@ -466,10 +472,13 @@ class Entity(Part):
 
 
 class State:
+    def __init__(self, parent):
+        self.parent = parent
+
     def enter(self, var):
         pass
 
-    def run(self, parent) -> str:
+    def run(self) -> str:
         return ""
 
     def exit(self):
@@ -490,9 +499,9 @@ class StateMachine:
         self.curr_state = self.states[new_state_name]
         self.curr_state.enter(enter_var)
 
-    def update_states(self, parent):
+    def update_states(self):
         for _ in range(self.nested_states_depth):
-            if new_state := self.curr_state.run(parent):
+            if new_state := self.curr_state.run():
                 self.change_state(new_state)
             else:
                 break
