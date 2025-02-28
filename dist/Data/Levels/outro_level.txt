@@ -1,0 +1,5 @@
+@ env = self.ENVIRONMENT_GROUP
+@ part = basic.Part
+@ rect = pygame.Rect
+
+part: [env], [], (400, 320), (800, 640), '../Data/Environment/outro.png', 'OUTRO', rect(0, 0, 800, 640), 100, 3, 1

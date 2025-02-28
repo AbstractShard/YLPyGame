@@ -31,8 +31,8 @@ class Level:
         self.ENTITY_GROUP = pygame.sprite.Group()
         self.ENVIRONMENT_GROUP = pygame.sprite.Group()
 
-        exec("import player")
-        exec("self.PLAYER = player.Player([self.PLAYER_GROUP], [self.ENVIRONMENT_GROUP], [self.ENTITY_GROUP])")
+        import player
+        self.PLAYER = player.Player([self.PLAYER_GROUP], [self.ENVIRONMENT_GROUP], [self.ENTITY_GROUP])
 
         self.LEVEL_DATA = get_level_data(path_to_level)
 

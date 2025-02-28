@@ -1,0 +1,115 @@
+@ env = self.ENVIRONMENT_GROUP
+@ part = basic.Part
+@ rect = pygame.Rect
+
+# Floor
+part: [env], [], (80, 80), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 80), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 80), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 160), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 160), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 240), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 240), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 320), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 320), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 320), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 320), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 400), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 400), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 400), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 480), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 480), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 480), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+part: [env], [], (80, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (160, 560), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (240, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (320, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (400, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (480, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (560, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (640, 560), (80, 80), '../Data/Environment/floor1.png', '', rect(0, 0, 100, 100), 0, 1, 1
+part: [env], [], (720, 560), (80, 80), '../Data/Environment/floor2.png', '', rect(0, 0, 100, 100), 0, 1, 1
+
+# Sky
+part: [env], [], (0, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 80), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 160), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 240), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 320), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 400), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 480), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 560), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (0, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+
+part: [env], [], (80, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (160, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (240, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (320, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (400, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (480, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (560, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (640, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (720, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 0), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+
+part: [env], [], (800, 80), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 160), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 240), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 320), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 400), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 480), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 560), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (800, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+
+part: [env], [], (80, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (160, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (240, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (320, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (400, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (480, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (560, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (640, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
+part: [env], [], (720, 640), (80, 80), '../Data/Environment/sky2.png', '', rect(0, 0, 100, 100), 0, 1, 1, True, '../Data/Environment/sky2.png', (80, 80)
