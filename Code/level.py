@@ -2,11 +2,6 @@ import pygame
 import random
 import sys
 
-import player
-import basic
-import melee
-import distance
-
 def get_level_data(path: str) -> list:
     with open(path, encoding="utf-8", mode="r") as file:
         data = list(map(lambda x: x.split(": "), map(str.strip, file.readlines())))
@@ -36,7 +31,9 @@ class Level:
         self.ENTITY_GROUP = pygame.sprite.Group()
         self.ENVIRONMENT_GROUP = pygame.sprite.Group()
 
-        self.PLAYER = player.Player([self.PLAYER_GROUP], [self.ENVIRONMENT_GROUP], [self.ENTITY_GROUP])
+        exec("import player")
+        exec("self.PLAYER = player.Player([self.PLAYER_GROUP], [self.ENVIRONMENT_GROUP], [self.ENTITY_GROUP])")
+
         self.LEVEL_DATA = get_level_data(path_to_level)
 
         self.start()
@@ -63,7 +60,7 @@ class Level:
 
 class Wave:
     def __init__(self, units_data: dict, wave_length: int, spawn_units_under: int, spawn_rect: pygame.Rect,
-                 spawn_cooldown_range: list):
+                 spawn_cooldown_range: list, end_counter: int):
         self.UNITS_DATA = units_data.copy()
 
         self.WAVE_LENGTH = wave_length
@@ -74,7 +71,9 @@ class Wave:
 
         self.curr_units = []
         self.used_units = 0
-        self.counter = {"spawn": random.randint(*self.SPAWN_COOLDOWN_RANGE)}
+        self.ended = False
+
+        self.counter = {"spawn": random.randint(*self.SPAWN_COOLDOWN_RANGE), "end": end_counter}
 
     def spawn_unit(self):
         spawn_position = (random.randint(self.SPAWN_RECT.x, self.SPAWN_RECT.x + self.SPAWN_RECT.width),
@@ -92,6 +91,9 @@ class Wave:
         self.used_units += 1
 
     def check_spawn(self):
+        if self.used_units >= self.WAVE_LENGTH:
+            return True
+
         if len(self.curr_units) >= self.SPAWN_UNITS_UNDER:
             return
 
@@ -103,8 +105,12 @@ class Wave:
         self.counter["spawn"] = random.randint(*self.SPAWN_COOLDOWN_RANGE)
 
     def run(self):
-        if self.used_units >= self.WAVE_LENGTH:
-            return
+        if self.ended and not self.curr_units:
+            if self.counter["end"] > 0:
+                self.counter["end"] -= 1
+                return
+
+            return True
 
         for unit in self.curr_units:
             if not unit.alive():
@@ -112,29 +118,5 @@ class Wave:
                 del unit
                 continue
 
-        self.check_spawn()
-
-
-class TestLevel(Level):
-    def __init__(self):
-        super().__init__("../Data/Levels/test_level.txt")
-
-        self.wave = Wave({melee.Melee: (self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP]),
-                          distance.Distance: (self.PLAYER, [self.ENTITY_GROUP], [self.ENVIRONMENT_GROUP], [self.PLAYER_GROUP])},
-                         10, 3, pygame.Rect(150, 150, 150, 150), [100, 250])
-
-    def run(self, screen: pygame.Surface):
-        self.check_events()
-
-        screen.fill("black")
-
-        self.wave.run()
-
-        self.PLAYER_GROUP.update()
-        self.ENTITY_GROUP.update()
-
-        self.ENVIRONMENT_GROUP.draw(screen)
-        self.ENTITY_GROUP.draw(screen)
-        self.PLAYER_GROUP.draw(screen)
-
-        basic.draw_debug(screen, [self.ENVIRONMENT_GROUP, self.ENTITY_GROUP, self.PLAYER_GROUP])
+        if self.check_spawn():
+            self.ended = True

@@ -41,7 +41,7 @@ class EditorLevel(level.Level):
         basic.draw_debug(screen, [self.ENVIRONMENT_GROUP, self.ENTITY_GROUP, self.PLAYER_GROUP])
 
 
-SIZE = WIDTH, HEIGHT = 800, 600
+SIZE = WIDTH, HEIGHT = 800, 640
 FPS = 60
 CLOCK = pygame.time.Clock()
 

@@ -10,7 +10,7 @@ class Move(basic.State):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.SPEED = 25 / main.FPS
+        self.SPEED = 50 / main.FPS
 
         self.parent.add_animation("MOVE", self.parent.orig_image, pygame.Rect(0, 20, 10, 20), 3, 3, 1)
 
@@ -19,7 +19,7 @@ class Move(basic.State):
         self.parent.change_animation("MOVE")
 
     def run(self) -> str:
-        if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) >= 70:
+        if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) > 100:
             return "SIMPLEPROJECTILE"
 
         try:
@@ -57,38 +57,41 @@ class SimpleProjectile(basic.State):
         if self.parent.a_data["name"] == "MOVE" and self.parent.a_data["ended"]:
             self.parent.change_animation("SIMPLEPROJECTILE", cycle=True)
 
-        if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) <= 70:
+        if basic.get_distance(self.parent.rect.center, self.parent.player.rect.center) <= 100:
             return "MOVE"
 
         if self.counter["reload"]:
             self.counter["reload"] -= 1
             return ""
 
-        proj = basic.Projectile(self.parent.rect.center, (7, 7), "circle",
-                                "../Data/Distance/Hitboxes/simple_projectile.png", "../Data/Distance/Hitboxes/simple_projectile.png",
+        proj = basic.Projectile(self.parent.rect.center, (14, 14), "circle",
+                                "../Data/Distance/Hitboxes/simple_projectile.png",
+                                (14, 14), "../Data/Distance/Hitboxes/simple_projectile.png",
                                 pygame.math.Vector2(self.parent.player.rect.center) - pygame.math.Vector2(self.parent.rect.center),
-                                150 / main.FPS, 500, 15, 10, True, 50)
+                                150 / main.FPS, 500, 15, 10, True, 50,
+                                "SIMPLEPROJECTILE", pygame.Rect(0, 0, 14, 14), 3, 3, 1)
+        proj.display.control_animation(cycle=True)
 
         self.parent.spawn_projectile(proj)
         self.counter["reload"] = self.reload_frames
 
 
 class Distance(basic.StateMachine, basic.Entity):
-    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(50, 100)):
+    def __init__(self, player: player.Player, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(20, 40)):
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Distance/main.png",
                               "SIMPLEPROJECTILE", pygame.Rect(0, 0, 10, 20), 7, 8, 1,
-                              75, "../Data/Distance/hurtbox.png", (10, 20),
-                              True, "../Data/Distance/collider.png")
+                              75, "../Data/Distance/hurtbox.png", (20, 40),
+                              True, "../Data/Distance/collider.png", (20, 40))
 
         self.STATES = {"MOVE": Move(self), "SIMPLEPROJECTILE": SimpleProjectile(self)}
-        basic.StateMachine.__init__(self, self.STATES, "MOVE")
-
         self.player = player
+
+        basic.StateMachine.__init__(self, self.STATES, "MOVE")
 
         self.control_animation(cycle=True)
 
-    def update(self):
-        basic.CSprite.update(self)
+    def update(self, image_rotated_by_angle=0):
+        basic.CSprite.update(self, image_rotated_by_angle)
 
         self.update_frames()
 
@@ -97,3 +100,6 @@ class Distance(basic.StateMachine, basic.Entity):
                 self.player.change_state("HITSTUN", proj.applied_hitstun_frames)
 
         self.update_states()
+
+        for proj in self.curr_projectiles:
+            basic.CSprite.update(proj.display)

@@ -42,7 +42,7 @@ class Move(basic.State):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.SPEED = 60 / main.FPS
+        self.SPEED = 120 / main.FPS
 
     def run(self) -> str:
         move_dirs = [dir for bind, dir in MOVEMENT.items() if pygame.key.get_pressed()[bind]]
@@ -95,10 +95,21 @@ class Hitstun(basic.State):
 
 class LightAttack(basic.OrbitAttack, basic.State):
     def __init__(self, parent):
-        basic.OrbitAttack.__init__(self, (0, 0), (15, 15),
-                                   "../Data/Player/Hitboxes/light_attack.png", "../Data/Player/Hitboxes/light_attack.png",
-                                   15, 2, 1, 3, 25, 50, 50)
+        basic.OrbitAttack.__init__(self, (0, 0), (30, 30),
+                                   "../Data/Player/Hitboxes/light_attack_collision.png",
+                                   (30, 30), "../Data/Player/Hitboxes/light_attack.png",
+                                   24, 2, 1, 3, 25, 50, 50,
+                                   "LIGHTATTACK", pygame.Rect(0, 0, 15, 15), 0, 6, 1)
         basic.State.__init__(self, parent)
+
+        self.animation_rotation = 0
+        self.display.control_animation(play=False)
+
+    def get_animation_rotation(self) -> int:
+        return int((pygame.math.Vector2(pygame.mouse.get_pos()) - pygame.math.Vector2(self.parent.rect.center)).as_polar()[1]) * -1
+
+    def enter(self, var):
+        self.display.change_animation("LIGHTATTACK")
 
     def run(self) -> str:
         if self.attack_ended():
@@ -106,22 +117,26 @@ class LightAttack(basic.OrbitAttack, basic.State):
 
         if self not in self.parent.curr_attacks:
             self.parent.make_attack(self, pygame.mouse.get_pos())
+            self.animation_rotation = self.get_animation_rotation()
+
+        basic.CSprite.update(self.display, self.animation_rotation)
 # endregion
 
 class Player(basic.StateMachine, basic.Entity):
-    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(10, 20)):
+    def __init__(self, groups: list, collide_with: list, to_attack: list, pos=(0, 0), size=(20, 40)):
         basic.Entity.__init__(self, groups, collide_with, to_attack, pos, size, "../Data/Player/main.png",
                               "IDLE", pygame.Rect(0, 0, 10, 20), 7, 20, 1,
-                              200, "../Data/Player/hurtbox.png", (10, 20),
-                              True, "../Data/Player/collider.png")
+                              200, "../Data/Player/hurtbox.png", (15, 35),
+                              True, "../Data/Player/collider.png", (20, 40),
+                              hurtbox_pos=(0, 1))
 
         self.STATES = {"IDLE": Idle(self), "MOVE": Move(self), "HITSTUN": Hitstun(self), "LIGHTATTACK": LightAttack(self)}
         basic.StateMachine.__init__(self, self.STATES, "IDLE")
 
         self.control_animation(cycle=True)
 
-    def update(self):
-        basic.CSprite.update(self)
+    def update(self, image_rotated_by_angle=0):
+        basic.CSprite.update(self, image_rotated_by_angle)
 
         self.update_frames()
 
